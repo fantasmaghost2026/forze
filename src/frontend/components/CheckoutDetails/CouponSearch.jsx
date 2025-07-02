@@ -8,9 +8,10 @@ import styles from './CheckoutDetails.module.css';
 
 import { useAllProductsContext } from '../../contexts/ProductsContextProvider';
 import { useConfigContext } from '../../contexts/ConfigContextProvider';
+import { useCurrencyContext } from '../../contexts/CurrencyContextProvider';
 import { AiFillTag } from 'react-icons/ai';
 import Price from '../Price';
-import { formatPrice, toastHandler, wait } from '../../utils/utils';
+import { toastHandler, wait } from '../../utils/utils';
 import { useIsMobile } from '../../hooks';
 
 const CouponSearch = ({ activeCoupon, updateActiveCoupon }) => {
@@ -22,6 +23,7 @@ const CouponSearch = ({ activeCoupon, updateActiveCoupon }) => {
   } = useAllProductsContext();
 
   const { storeConfig } = useConfigContext();
+  const { formatPrice } = useCurrencyContext();
   const COUPONS = storeConfig.coupons || [];
 
   const isMobile = useIsMobile();
@@ -43,9 +45,9 @@ const CouponSearch = ({ activeCoupon, updateActiveCoupon }) => {
     ) {
       toastHandler(
         ToastType.Info,
-        `Compra por encima de $${formatPrice(
+        `Compra por encima de ${formatPrice(
           couponClicked.minCartPriceRequired
-        )} CUP para aplicar`
+        )} para aplicar`
       );
       return;
     }
