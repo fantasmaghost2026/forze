@@ -54,6 +54,7 @@ export const LOCAL_STORAGE_KEYS = {
   User: 'user',
   Token: 'token',
   StoreConfig: 'storeConfig',
+  Currency: 'selectedCurrency',
 };
 
 export const LOGIN_CLICK_TYPE = {
@@ -307,7 +308,7 @@ export const PRODUCT_CATEGORY_ICONS = {
   'default': '📦'
 };
 
-// CURRENCY CONSTANTS - ADDED TO FIX IMPORT ERRORS
+// SISTEMA DE MONEDAS CORREGIDO CON TASAS EXACTAS
 export const DEFAULT_CURRENCY = 'CUP';
 
 export const CURRENCIES = {
@@ -316,27 +317,27 @@ export const CURRENCIES = {
     name: 'Peso Cubano',
     symbol: '$',
     flag: '🇨🇺',
-    rate: 1
+    rate: 1 // Moneda base
   },
   USD: {
     code: 'USD',
     name: 'Dólar Estadounidense',
     symbol: '$',
     flag: '🇺🇸',
-    rate: 0.04
+    rate: 385.00 // 1 USD = 385.00 CUP
   },
   EUR: {
     code: 'EUR',
     name: 'Euro',
     symbol: '€',
     flag: '🇪🇺',
-    rate: 0.037
+    rate: 425.00 // 1 EUR = 425.00 CUP
   },
   MLC: {
     code: 'MLC',
     name: 'Moneda Libremente Convertible',
     symbol: 'MLC',
-    flag: '🇨🇺',
-    rate: 0.04
+    flag: '🏦',
+    rate: 250.00 // 1 MLC = 250.00 CUP
   }
 };

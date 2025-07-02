@@ -4,6 +4,10 @@ import { useCurrencyContext } from '../contexts/CurrencyContextProvider';
 const Price = ({ amount, showCurrency = true, className = '' }) => {
   const { formatPrice } = useCurrencyContext();
   
+  if (!amount && amount !== 0) {
+    return <span className={className}>--</span>;
+  }
+  
   const isAmountNegative = amount < 0;
   const amountOnUI = isAmountNegative ? -1 * amount : amount;
 

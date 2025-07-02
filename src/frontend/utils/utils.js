@@ -76,10 +76,11 @@ export const givePaginatedList = (list) => {
   );
 };
 
-export const formatPrice = (price) =>
-  price.toLocaleString('es-CU', {
-    maximumFractionDigits: 2,
-  });
+// FUNCIÓN DE FORMATEO DE PRECIO REMOVIDA - AHORA SE USA EL CONTEXTO DE MONEDA
+// export const formatPrice = (price) =>
+//   price.toLocaleString('es-CU', {
+//     maximumFractionDigits: 2,
+//   });
 
 export const Popper = () => {
   const end = Date.now() + 1 * 1000;
