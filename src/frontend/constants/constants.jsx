@@ -306,3 +306,37 @@ export const PRODUCT_CATEGORY_ICONS = {
   'accessories': '🔌',
   'default': '📦'
 };
+
+// CURRENCY CONSTANTS - ADDED TO FIX IMPORT ERRORS
+export const DEFAULT_CURRENCY = 'CUP';
+
+export const CURRENCIES = {
+  CUP: {
+    code: 'CUP',
+    name: 'Peso Cubano',
+    symbol: '$',
+    flag: '🇨🇺',
+    rate: 1
+  },
+  USD: {
+    code: 'USD',
+    name: 'Dólar Estadounidense',
+    symbol: '$',
+    flag: '🇺🇸',
+    rate: 0.04
+  },
+  EUR: {
+    code: 'EUR',
+    name: 'Euro',
+    symbol: '€',
+    flag: '🇪🇺',
+    rate: 0.037
+  },
+  MLC: {
+    code: 'MLC',
+    name: 'Moneda Libremente Convertible',
+    symbol: 'MLC',
+    flag: '🇨🇺',
+    rate: 0.04
+  }
+};
