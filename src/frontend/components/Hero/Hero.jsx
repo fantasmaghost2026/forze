@@ -11,10 +11,10 @@ const Hero = () => {
     <section className='white-bcg'>
       <div className={`container ${styles.hero}`}>
         <article className={styles.content}>
-          <h1>Transformando ideas en experiencias digitales interactivas y fluidas con tecnología de vanguardia.</h1>
+          <h1>La plataforma de comercio detrás de todo</h1>
 
           <p>
-            ¡Bienvenido a Yero Shop! Experimenta la alegría de las compras en línea sin problemas y explora el mundo de de una forma diferente con nosotros. Comienza a navegar por nuestra vasta colección hoy y eleva tu estilo de vida digital con nuestros productos y servicios excepcionales.
+            ¡Bienvenido a Yero Shop! Vende online y en persona. Vende a nivel local y mundial.
           </p>
 
           <Link to='/products' className={`btn ${styles.btnHero}`}>

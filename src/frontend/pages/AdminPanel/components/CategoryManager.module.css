@@ -55,6 +55,49 @@
   font-size: 0.9rem;
 }
 
+.statusIndicator {
+  background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
+  border: 2px solid var(--primary-300);
+  border-radius: var(--borderRadius);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.statusIndicator h4 {
+  margin: 0 0 1rem 0;
+  color: var(--primary-700);
+}
+
+.statusGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.statusItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: var(--white);
+  border-radius: var(--borderRadius);
+  box-shadow: var(--shadow-2);
+}
+
+.statusNumber {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-600);
+  margin-bottom: 0.5rem;
+}
+
+.statusLabel {
+  font-size: 0.9rem;
+  color: var(--grey-600);
+  font-weight: 500;
+}
+
 .categoryForm {
   background: var(--grey-50);
   padding: 2rem;
@@ -167,11 +210,22 @@
   font-size: 0.8rem;
 }
 
-.emptyMessage {
+.emptyState {
   text-align: center;
+  padding: 3rem;
+  background: var(--grey-50);
+  border-radius: var(--borderRadius);
+  border: 2px dashed var(--grey-300);
+}
+
+.emptyState h3 {
+  color: var(--grey-600);
+  margin-bottom: 1rem;
+}
+
+.emptyState p {
   color: var(--grey-500);
-  font-style: italic;
-  padding: 2rem;
+  margin-bottom: 2rem;
 }
 
 .categoriesGrid {
@@ -312,5 +366,9 @@
   .listHeader {
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .statusGrid {
+    grid-template-columns: 1fr;
   }
 }

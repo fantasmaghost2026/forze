@@ -242,7 +242,7 @@ const ProductManager = () => {
     resetForm();
   };
 
-  // Función para sincronización completa MEJORADA
+  // Función para sincronización completa MEJORADA CON EVENTOS ADICIONALES
   const performCompleteSync = (updatedProducts) => {
     console.log('🔄 Iniciando sincronización completa de productos...');
     
@@ -278,6 +278,11 @@ const ProductManager = () => {
       
       window.dispatchEvent(new CustomEvent('forceStoreUpdate'));
       
+      // NUEVO: Evento específico para cambios de configuración del admin
+      window.dispatchEvent(new CustomEvent('adminConfigChanged', { 
+        detail: { products: updatedProducts, type: 'products' } 
+      }));
+      
       // Forzar re-renderizado adicional
       window.dispatchEvent(new CustomEvent('productsConfigUpdated', { 
         detail: { products: updatedProducts } 
@@ -293,6 +298,12 @@ const ProductManager = () => {
           if (parsedConfig.products && parsedConfig.products.length === updatedProducts.length) {
             console.log('✅ Sincronización de productos verificada exitosamente');
             toastHandler(ToastType.Info, '🔄 Productos sincronizados en tiempo real');
+            
+            // NUEVO: Notificación específica para cambios de envío
+            const shippingEnabledProducts = updatedProducts.filter(p => p.isShippingAvailable);
+            if (shippingEnabledProducts.length > 0) {
+              toastHandler(ToastType.Success, `🚚 ${shippingEnabledProducts.length} productos con envío disponible actualizados`);
+            }
           }
         } catch (error) {
           console.error('Error en verificación de sincronización:', error);
@@ -577,6 +588,9 @@ const ProductManager = () => {
                 onChange={handleInputChange}
               />
               🚚 Envío Disponible (Permite entrega a domicilio)
+              <small className={styles.shippingNote}>
+                ⚡ Los cambios se aplican inmediatamente en el checkout
+              </small>
             </label>
             <label className={styles.checkboxLabel}>
               <input
@@ -623,7 +637,7 @@ const ProductManager = () => {
                   <p className={styles.productRating}>⭐ {product.stars} ({product.reviewCount})</p>
                   <p className={styles.productCategory}>📂 {product.category}</p>
                   <p className={styles.productCompany}>🏢 {product.company}</p>
-                  <p className={styles.productShipping}>
+                  <p className={`${styles.productShipping} ${product.isShippingAvailable ? styles.shippingEnabled : styles.shippingDisabled}`}>
                     🚚 {product.isShippingAvailable ? 'Envío disponible' : 'Sin envío (Solo recogida)'}
                   </p>
                   {product.featured && <span className={styles.featuredBadge}>⭐ Destacado</span>}

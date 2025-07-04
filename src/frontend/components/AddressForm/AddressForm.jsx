@@ -2,7 +2,7 @@ import { SERVICE_TYPES, ToastType, COUNTRY_CODES } from '../../constants/constan
 import { useConfigContext } from '../../contexts/ConfigContextProvider';
 import { useCurrencyContext } from '../../contexts/CurrencyContextProvider';
 import { useAllProductsContext } from '../../contexts/ProductsContextProvider';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { v4 as uuid } from 'uuid';
 import FormRow from '../FormRow';
 import Price from '../Price';
@@ -22,30 +22,80 @@ const AddressForm = ({ isAdding, isEditingAndData = null, closeForm }) => {
 
   const isEditing = !!isEditingAndData;
 
-  // VERIFICAR SI HAY PRODUCTOS CON ENVÍO DISPONIBLE EN EL CARRITO
+  // FUNCIÓN MEJORADA PARA VERIFICAR ENVÍO DISPONIBLE CON SINCRONIZACIÓN EN TIEMPO REAL
   const hasShippingAvailableInCart = () => {
-    // Obtener productos actualizados desde localStorage
+    // 1. Obtener productos actualizados desde localStorage (configuración del admin)
     const savedConfig = localStorage.getItem('adminStoreConfig');
-    let products = [];
+    let adminProducts = [];
     
     if (savedConfig) {
       try {
         const parsedConfig = JSON.parse(savedConfig);
-        products = parsedConfig.products || [];
+        adminProducts = parsedConfig.products || [];
       } catch (error) {
-        console.error('Error al cargar productos:', error);
+        console.error('Error al cargar productos del admin:', error);
       }
     }
 
+    // 2. Verificar cada producto en el carrito
     return cart.some(cartItem => {
       // Extraer el ID del producto (sin el color)
       const productId = cartItem._id.split('#')[0] || cartItem._id;
-      const product = products.find(p => p._id === productId);
-      return product && product.isShippingAvailable;
+      
+      // Buscar el producto en la configuración del admin (datos más actualizados)
+      const adminProduct = adminProducts.find(p => p._id === productId);
+      
+      // Si encontramos el producto en la configuración del admin, usar esos datos
+      if (adminProduct) {
+        console.log(`🔍 Producto ${adminProduct.name}: envío disponible = ${adminProduct.isShippingAvailable}`);
+        return adminProduct.isShippingAvailable === true;
+      }
+      
+      // Si no está en la configuración del admin, usar los datos del carrito
+      console.log(`⚠️ Producto ${cartItem.name}: usando datos del carrito = ${cartItem.isShippingAvailable}`);
+      return cartItem.isShippingAvailable === true;
     });
   };
 
-  const canUseHomeDelivery = hasShippingAvailableInCart();
+  // ESTADO REACTIVO PARA DETECTAR CAMBIOS EN TIEMPO REAL
+  const [canUseHomeDelivery, setCanUseHomeDelivery] = useState(false);
+
+  // EFECTO PARA ACTUALIZAR EL ESTADO CUANDO CAMBIE EL CARRITO O LA CONFIGURACIÓN
+  useEffect(() => {
+    const updateShippingAvailability = () => {
+      const hasShipping = hasShippingAvailableInCart();
+      console.log(`🚚 Actualización de envío disponible: ${hasShipping}`);
+      setCanUseHomeDelivery(hasShipping);
+    };
+
+    // Actualizar inmediatamente
+    updateShippingAvailability();
+
+    // Escuchar eventos de actualización de productos
+    const handleProductsUpdate = () => {
+      console.log('📡 Evento de actualización de productos detectado en AddressForm');
+      setTimeout(updateShippingAvailability, 100); // Pequeño delay para asegurar que los datos estén actualizados
+    };
+
+    const handleConfigUpdate = () => {
+      console.log('📡 Evento de actualización de configuración detectado en AddressForm');
+      setTimeout(updateShippingAvailability, 100);
+    };
+
+    // Agregar listeners para eventos de sincronización
+    window.addEventListener('productsUpdated', handleProductsUpdate);
+    window.addEventListener('productsConfigUpdated', handleProductsUpdate);
+    window.addEventListener('forceStoreUpdate', handleConfigUpdate);
+    window.addEventListener('adminConfigChanged', handleConfigUpdate);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('productsUpdated', handleProductsUpdate);
+      window.removeEventListener('productsConfigUpdated', handleProductsUpdate);
+      window.removeEventListener('forceStoreUpdate', handleConfigUpdate);
+      window.removeEventListener('adminConfigChanged', handleConfigUpdate);
+    };
+  }, [cart]); // Dependencia del carrito para reaccionar a cambios
 
   const defaultState = {
     username: '',
@@ -67,6 +117,16 @@ const AddressForm = ({ isAdding, isEditingAndData = null, closeForm }) => {
       receiverCountryCode: isEditingAndData.receiverCountryCode || '+53'
     } : defaultState
   );
+
+  // ACTUALIZAR EL TIPO DE SERVICIO CUANDO CAMBIE LA DISPONIBILIDAD DE ENVÍO
+  useEffect(() => {
+    if (!isEditing && !canUseHomeDelivery && inputs.serviceType === SERVICE_TYPES.HOME_DELIVERY) {
+      setInputs(prev => ({
+        ...prev,
+        serviceType: SERVICE_TYPES.PICKUP
+      }));
+    }
+  }, [canUseHomeDelivery, isEditing]);
 
   const [mobileValidation, setMobileValidation] = useState({
     isValid: true,
@@ -298,6 +358,7 @@ const AddressForm = ({ isAdding, isEditingAndData = null, closeForm }) => {
             {!canUseHomeDelivery && (
               <div className={styles.shippingWarning}>
                 <span>⚠️ Los productos en tu carrito no tienen envío disponible. Solo puedes recoger en el local.</span>
+                <small>💡 Los cambios del panel de administración se aplican en tiempo real</small>
               </div>
             )}
           </div>

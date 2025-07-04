@@ -81,6 +81,7 @@ export const LOCAL_STORAGE_KEYS = {
   User: 'user',
   Token: 'token',
   StoreConfig: 'storeConfig',
+  Currency: 'selectedCurrency',
 };
 
 export const LOGIN_CLICK_TYPE = {
@@ -203,6 +204,40 @@ export const PRODUCT_CATEGORY_ICONS = {
   'accessories': '🔌',
   'default': '📦'
 };
+
+// CONSTANTES DE MONEDA
+export const CURRENCIES = {
+  CUP: {
+    code: 'CUP',
+    name: 'Peso Cubano',
+    symbol: '$',
+    flag: '🇨🇺',
+    rate: 1,
+  },
+  USD: {
+    code: 'USD',
+    name: 'Dólar Estadounidense',
+    symbol: '$',
+    flag: '🇺🇸',
+    rate: 320,
+  },
+  EUR: {
+    code: 'EUR',
+    name: 'Euro',
+    symbol: '€',
+    flag: '🇪🇺',
+    rate: 340,
+  },
+  MLC: {
+    code: 'MLC',
+    name: 'Moneda Libremente Convertible',
+    symbol: 'MLC',
+    flag: '🏦',
+    rate: 270,
+  },
+};
+
+export const DEFAULT_CURRENCY = 'CUP';
 `;
     return constantsContent;
   };
@@ -423,7 +458,7 @@ export const STORE_MESSAGES = ${JSON.stringify(messages, null, 2)};
           <div className={styles.infoItem}>
             <strong>📁 Archivos incluidos:</strong>
             <ul>
-              <li><code>constants.jsx</code> - Configuración de cupones, zonas y WhatsApp</li>
+              <li><code>constants.jsx</code> - Configuración de cupones, zonas, WhatsApp y monedas</li>
               <li><code>products.js</code> - Base de datos de productos con estructura exacta e imágenes responsivas</li>
               <li><code>categories.js</code> - Base de datos de categorías con estructura exacta e imágenes responsivas</li>
               <li><code>messages.js</code> - Todos los mensajes de la tienda</li>
@@ -442,6 +477,9 @@ export const STORE_MESSAGES = ${JSON.stringify(messages, null, 2)};
           <div className={styles.infoItem}>
             <strong>🛡️ Seguridad:</strong> Mantiene la integridad del código fuente y permite restaurar fácilmente los cambios.
           </div>
+          <div className={styles.infoItem}>
+            <strong>💱 Monedas:</strong> Incluye todas las constantes de moneda necesarias para el sistema de conversión.
+          </div>
         </div>
       </div>
 
@@ -453,7 +491,7 @@ export const STORE_MESSAGES = ${JSON.stringify(messages, null, 2)};
           <div className={styles.cardContent}>
             <p>
               Exporta todos los cambios realizados en el panel de control a archivos de código fuente 
-              actualizados manteniendo la estructura exacta con imágenes optimizadas. Esto incluye productos, categorías, cupones, zonas, mensajes y configuraciones.
+              actualizados manteniendo la estructura exacta con imágenes optimizadas. Esto incluye productos, categorías, cupones, zonas, mensajes, configuraciones y sistema de monedas.
             </p>
             <div className={styles.changesSummary}>
               <h4>📊 Resumen de cambios a exportar:</h4>
@@ -463,6 +501,7 @@ export const STORE_MESSAGES = ${JSON.stringify(messages, null, 2)};
                 <li>📦 {stats.products} productos en catálogo (con imágenes 600x450px responsivas)</li>
                 <li>📂 {stats.categories} categorías disponibles (con imágenes 400x300px responsivas)</li>
                 <li>💬 {Object.keys(JSON.parse(localStorage.getItem('storeMessages') || '{}')).length} categorías de mensajes</li>
+                <li>💱 Sistema completo de monedas (CUP, USD, EUR, MLC)</li>
               </ul>
             </div>
             <button 

@@ -120,7 +120,7 @@ export const SANTIAGO_ZONES = [
   {
     "id": "vista_alegre",
     "name": "Vista Alegre",
-    "cost": 350
+    "cost": 500
   },
   {
     "id": "sueno",
@@ -138,34 +138,9 @@ export const SANTIAGO_ZONES = [
     "cost": 500
   },
   {
-    "id": "reparto_flores",
-    "name": "Versalles",
-    "cost": 600
-  },
-  {
-    "id": "chicharrones",
-    "name": "Chicharrones",
-    "cost": 400
-  },
-  {
-    "id": "los_olmos",
-    "name": "Veguita de Galo",
-    "cost": 350
-  },
-  {
-    "id": "santa_barbara",
-    "name": "Santa Bárbara",
-    "cost": 500
-  },
-  {
     "id": "micro_9",
     "name": "Micro 7, 8 , 9",
-    "cost": 500
-  },
-  {
-    "id": "micro_4",
-    "name": "Micro 4",
-    "cost": 100
+    "cost": 300
   },
   {
     "id": "alameda",
@@ -174,42 +149,62 @@ export const SANTIAGO_ZONES = [
   },
   {
     "id": "puerto",
-    "name": "Los Pinos",
-    "cost": 400
+    "name": "El Caney",
+    "cost": 1000
   },
   {
     "id": "siboney",
-    "name": "Pastorita",
-    "cost": 400
+    "name": "Quintero",
+    "cost": 500
   },
   {
     "id": "ciudamar",
-    "name": "Rajayoga",
-    "cost": 400
+    "name": "Distrito José Martí",
+    "cost": 200
   },
   {
-    "id": "planta",
-    "name": "Planta",
-    "cost": 400
+    "id": "marimon",
+    "name": "Marimon",
+    "cost": 150
   },
   {
-    "id": "tivoli",
-    "name": "Tivoli",
+    "id": "los_cangrejitos",
+    "name": "Los cangrejitos",
     "cost": 350
   },
   {
-    "id": "reparto_militar_(la_ceiba)",
-    "name": "Reparto Militar (la ceiba)",
-    "cost": 500
+    "id": "trocha",
+    "name": "Trocha",
+    "cost": 350
+  },
+  {
+    "id": "versalles",
+    "name": "Versalles",
+    "cost": 1000
+  },
+  {
+    "id": "portuondo",
+    "name": "Portuondo",
+    "cost": 600
   },
   {
     "id": "30_de_noviembre",
     "name": "30 de Noviembre",
-    "cost": 500
+    "cost": 600
   },
   {
-    "id": "centro_de_la_ciudad",
-    "name": "Centro de la Ciudad",
+    "id": "rajayoga",
+    "name": "Rajayoga",
+    "cost": 800
+  },
+  {
+    "id": "antonio_maceo",
+    "name": "Antonio Maceo",
+    "cost": 600
+  },
+  {
+    "id": "los_pinos",
+    "name": "Los Pinos",
     "cost": 300
   }
 ];
@@ -217,28 +212,28 @@ export const SANTIAGO_ZONES = [
 // Cupones de descuento - ACTUALIZADOS
 export const COUPONS = [
   {
-    "couponCode": "YERO - VIP",
+    "couponCode": "100% AHORRO",
     "text": "100% Descuento",
     "discountPercent": 55,
     "minCartPriceRequired": 300000,
     "id": "b6c7a585-79a2-4fde-93cd-80422ef3acfa"
   },
   {
-    "couponCode": "YERO - EXCLUSIVO",
+    "couponCode": "20% REGALO",
     "text": "20% Descuento",
     "discountPercent": 20,
     "minCartPriceRequired": 200000,
     "id": "ecdff7ad-f653-467f-9257-7fcd0fdea3a8"
   },
   {
-    "couponCode": "YERO - SECRETO",
+    "couponCode": "10% PROMO",
     "text": "10% Descuento",
     "discountPercent": 10,
     "minCartPriceRequired": 100000,
     "id": "4898bd1c-7227-47b0-b6fe-32159f71072b"
   },
   {
-    "couponCode": "YERO - LIMITADO",
+    "couponCode": "5% MENOS",
     "text": "5% Descuento",
     "discountPercent": 5,
     "minCartPriceRequired": 50000,
@@ -259,10 +254,10 @@ export const STORE_WHATSAPP = '+53 54690878';
 
 // Configuración por defecto de la tienda - ACTUALIZADA
 export const DEFAULT_STORE_CONFIG = {
-  "storeName": "Gada Electronics",
+  "storeName": "Yero Shop!",
   "whatsappNumber": "+53 54690878",
   "storeAddress": "Santiago de Cuba, Cuba",
-  "lastModified": "2025-07-02T07:43:24.840Z",
+  "lastModified": "2025-07-04T18:00:45.832Z",
   "version": "1.0.0"
 };
 
@@ -308,36 +303,36 @@ export const PRODUCT_CATEGORY_ICONS = {
   'default': '📦'
 };
 
-// SISTEMA DE MONEDAS CORREGIDO CON TASAS EXACTAS
-export const DEFAULT_CURRENCY = 'CUP';
-
+// CONSTANTES DE MONEDA
 export const CURRENCIES = {
   CUP: {
     code: 'CUP',
     name: 'Peso Cubano',
     symbol: '$',
     flag: '🇨🇺',
-    rate: 1 // Moneda base
+    rate: 1,
   },
   USD: {
     code: 'USD',
     name: 'Dólar Estadounidense',
     symbol: '$',
     flag: '🇺🇸',
-    rate: 385.00 // 1 USD = 385.00 CUP
+    rate: 384,
   },
   EUR: {
     code: 'EUR',
     name: 'Euro',
     symbol: '€',
     flag: '🇪🇺',
-    rate: 425.00 // 1 EUR = 425.00 CUP
+    rate: 425,
   },
   MLC: {
     code: 'MLC',
     name: 'Moneda Libremente Convertible',
     symbol: 'MLC',
     flag: '🏦',
-    rate: 250.00 // 1 MLC = 250.00 CUP
-  }
+    rate: 250,
+  },
 };
+
+export const DEFAULT_CURRENCY = 'CUP';

@@ -81,9 +81,11 @@ const ProductsContextProvider = ({ children }) => {
           const parsedConfig = JSON.parse(savedConfig);
           if (parsedConfig.products && parsedConfig.products.length > 0) {
             products = parsedConfig.products;
+            console.log('📦 Productos cargados desde configuración del admin:', products.length);
           }
           if (parsedConfig.categories && parsedConfig.categories.length > 0) {
             categories = parsedConfig.categories;
+            console.log('📂 Categorías cargadas desde configuración del admin:', categories.length);
           }
         } catch (error) {
           console.error('Error al cargar configuración guardada:', error);
@@ -92,6 +94,7 @@ const ProductsContextProvider = ({ children }) => {
 
       // Si no hay datos guardados, cargar desde el servicio
       if (products.length === 0 || categories.length === 0) {
+        console.log('📡 Cargando datos desde el servicio...');
         const serviceData = await getAllProductsCategoriesService();
         if (products.length === 0) products = serviceData.products;
         if (categories.length === 0) categories = serviceData.categories;
@@ -107,7 +110,7 @@ const ProductsContextProvider = ({ children }) => {
     }
   };
 
-  // FUNCIÓN MEJORADA PARA SINCRONIZACIÓN COMPLETA E INMEDIATA
+  // FUNCIÓN MEJORADA PARA SINCRONIZACIÓN COMPLETA E INMEDIATA DE PRODUCTOS
   const updateProductsFromAdmin = (newProducts) => {
     console.log('🔄 Iniciando sincronización completa de productos...');
     
@@ -117,7 +120,7 @@ const ProductsContextProvider = ({ children }) => {
       payload: { products: newProducts },
     });
 
-    // 2. Guardar en localStorage para persistencia
+    // 2. Guardar en localStorage para persistencia con verificación
     const savedConfig = localStorage.getItem('adminStoreConfig') || '{}';
     let config = {};
     
@@ -132,6 +135,19 @@ const ProductsContextProvider = ({ children }) => {
     config.lastModified = new Date().toISOString();
     localStorage.setItem('adminStoreConfig', JSON.stringify(config));
     
+    // Verificar que se guardó correctamente
+    const verifyConfig = localStorage.getItem('adminStoreConfig');
+    if (verifyConfig) {
+      try {
+        const parsedVerify = JSON.parse(verifyConfig);
+        if (parsedVerify.products && parsedVerify.products.length === newProducts.length) {
+          console.log('✅ Productos guardados correctamente en localStorage');
+        }
+      } catch (error) {
+        console.error('Error en verificación de guardado de productos:', error);
+      }
+    }
+    
     // 3. Forzar actualización inmediata en toda la aplicación
     setTimeout(() => {
       // Disparar múltiples eventos para garantizar sincronización
@@ -140,6 +156,11 @@ const ProductsContextProvider = ({ children }) => {
       }));
       
       window.dispatchEvent(new CustomEvent('forceStoreUpdate'));
+      
+      // Evento específico para cambios del admin
+      window.dispatchEvent(new CustomEvent('adminConfigChanged', { 
+        detail: { products: newProducts, type: 'products' } 
+      }));
       
       // Forzar re-renderizado del contexto
       dispatch({
@@ -151,7 +172,7 @@ const ProductsContextProvider = ({ children }) => {
     console.log('✅ Sincronización de productos completada');
   };
 
-  // FUNCIÓN MEJORADA PARA SINCRONIZACIÓN COMPLETA E INMEDIATA
+  // FUNCIÓN MEJORADA PARA SINCRONIZACIÓN COMPLETA E INMEDIATA DE CATEGORÍAS
   const updateCategoriesFromAdmin = (newCategories) => {
     console.log('🔄 Iniciando sincronización completa de categorías...');
     
@@ -161,7 +182,7 @@ const ProductsContextProvider = ({ children }) => {
       payload: { categories: newCategories },
     });
 
-    // 2. Guardar en localStorage para persistencia
+    // 2. Guardar en localStorage para persistencia con verificación
     const savedConfig = localStorage.getItem('adminStoreConfig') || '{}';
     let config = {};
     
@@ -176,6 +197,19 @@ const ProductsContextProvider = ({ children }) => {
     config.lastModified = new Date().toISOString();
     localStorage.setItem('adminStoreConfig', JSON.stringify(config));
     
+    // Verificar que se guardó correctamente
+    const verifyConfig = localStorage.getItem('adminStoreConfig');
+    if (verifyConfig) {
+      try {
+        const parsedVerify = JSON.parse(verifyConfig);
+        if (parsedVerify.categories && parsedVerify.categories.length === newCategories.length) {
+          console.log('✅ Categorías guardadas correctamente en localStorage');
+        }
+      } catch (error) {
+        console.error('Error en verificación de guardado de categorías:', error);
+      }
+    }
+    
     // 3. Forzar actualización inmediata en toda la aplicación
     setTimeout(() => {
       // Disparar múltiples eventos para garantizar sincronización
@@ -184,6 +218,11 @@ const ProductsContextProvider = ({ children }) => {
       }));
       
       window.dispatchEvent(new CustomEvent('forceStoreUpdate'));
+      
+      // Evento específico para cambios del admin
+      window.dispatchEvent(new CustomEvent('adminConfigChanged', { 
+        detail: { categories: newCategories, type: 'categories' } 
+      }));
       
       // Forzar re-renderizado del contexto
       dispatch({
@@ -207,11 +246,11 @@ const ProductsContextProvider = ({ children }) => {
     updateWishlist(user.wishlist);
   }, [user]);
 
-  // ESCUCHAR EVENTOS DE ACTUALIZACIÓN MEJORADOS
+  // ESCUCHAR EVENTOS DE ACTUALIZACIÓN MEJORADOS CON VERIFICACIÓN
   useEffect(() => {
     const handleProductsUpdate = (event) => {
       const { products: updatedProducts } = event.detail;
-      console.log('📡 Evento de actualización de productos recibido');
+      console.log('📡 Evento de actualización de productos recibido en ProductsContext');
       
       dispatch({
         type: PRODUCTS_ACTION.UPDATE_PRODUCTS_FROM_ADMIN,
@@ -221,7 +260,7 @@ const ProductsContextProvider = ({ children }) => {
 
     const handleCategoriesUpdate = (event) => {
       const { categories: updatedCategories } = event.detail;
-      console.log('📡 Evento de actualización de categorías recibido');
+      console.log('📡 Evento de actualización de categorías recibido en ProductsContext');
       
       dispatch({
         type: PRODUCTS_ACTION.UPDATE_CATEGORIES_FROM_ADMIN,
@@ -230,7 +269,7 @@ const ProductsContextProvider = ({ children }) => {
     };
 
     const handleForceUpdate = () => {
-      console.log('🔄 Forzando actualización completa...');
+      console.log('🔄 Forzando actualización completa en ProductsContext...');
       
       const savedConfig = localStorage.getItem('adminStoreConfig');
       if (savedConfig) {
@@ -254,16 +293,37 @@ const ProductsContextProvider = ({ children }) => {
       }
     };
 
+    const handleAdminConfigChange = (event) => {
+      const { type, products: updatedProducts, categories: updatedCategories } = event.detail;
+      console.log(`🔧 Cambio de configuración del admin detectado: ${type}`);
+      
+      if (type === 'products' && updatedProducts) {
+        dispatch({
+          type: PRODUCTS_ACTION.UPDATE_PRODUCTS_FROM_ADMIN,
+          payload: { products: updatedProducts },
+        });
+      }
+      
+      if (type === 'categories' && updatedCategories) {
+        dispatch({
+          type: PRODUCTS_ACTION.UPDATE_CATEGORIES_FROM_ADMIN,
+          payload: { categories: updatedCategories },
+        });
+      }
+    };
+
     // Agregar listeners
     window.addEventListener('productsUpdated', handleProductsUpdate);
     window.addEventListener('categoriesUpdated', handleCategoriesUpdate);
     window.addEventListener('forceStoreUpdate', handleForceUpdate);
+    window.addEventListener('adminConfigChanged', handleAdminConfigChange);
 
     // Cleanup
     return () => {
       window.removeEventListener('productsUpdated', handleProductsUpdate);
       window.removeEventListener('categoriesUpdated', handleCategoriesUpdate);
       window.removeEventListener('forceStoreUpdate', handleForceUpdate);
+      window.removeEventListener('adminConfigChanged', handleAdminConfigChange);
     };
   }, []);
 

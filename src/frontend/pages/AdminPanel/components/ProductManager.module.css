@@ -168,7 +168,8 @@
 
 .checkboxGroup {
   display: flex;
-  gap: 2rem;
+  flex-direction: column;
+  gap: 1.5rem;
   margin: 1.5rem 0;
   padding: 1rem;
   background: var(--white);
@@ -178,7 +179,7 @@
 
 .checkboxLabel {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.5rem;
   font-weight: 500;
   cursor: pointer;
@@ -186,6 +187,14 @@
 
 .checkboxLabel input {
   width: auto;
+  margin-right: 0.5rem;
+}
+
+.shippingNote {
+  color: var(--green-medium);
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-left: 1.5rem;
 }
 
 .formActions {
@@ -305,6 +314,26 @@
   font-size: 0.9rem;
 }
 
+.productShipping {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.5rem;
+  border-radius: var(--borderRadius);
+}
+
+.shippingEnabled {
+  background: var(--green-light);
+  color: var(--green-dark);
+  border: 1px solid var(--green-medium);
+}
+
+.shippingDisabled {
+  background: var(--red-light);
+  color: var(--red-dark);
+  border: 1px solid var(--red-medium);
+}
+
 .featuredBadge {
   background: linear-gradient(135deg, #fbbf24, #f59e0b);
   color: var(--white);
@@ -350,7 +379,6 @@
   }
 
   .checkboxGroup {
-    flex-direction: column;
     gap: 1rem;
   }
 

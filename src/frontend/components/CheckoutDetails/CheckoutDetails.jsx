@@ -29,7 +29,7 @@ const CheckoutDetails = ({
   } = useAllProductsContext();
 
   const { storeConfig } = useConfigContext();
-  const { formatPrice, getCurrentCurrency } = useCurrencyContext();
+  const { formatPriceWithCode, getCurrentCurrency, convertFromCUP } = useCurrencyContext();
   const STORE_WHATSAPP = storeConfig.storeInfo?.whatsappNumber || '+53 54690878';
   const SANTIAGO_ZONES = storeConfig.zones || [];
 
@@ -50,6 +50,7 @@ const CheckoutDetails = ({
     ? (selectedAddress?.deliveryCost || 0)
     : 0;
 
+  // Calcular descuento del cupón según la moneda seleccionada
   const priceAfterCouponApplied = activeCoupon
     ? -Math.floor((totalAmountFromContext * activeCoupon.discountPercent) / 100)
     : 0;
@@ -62,12 +63,21 @@ const CheckoutDetails = ({
 
   const updateActiveCoupon = (couponObjClicked) => {
     setActiveCoupon(couponObjClicked);
-    toastHandler(ToastType.Success, 'Cupón aplicado exitosamente');
+    
+    // Notificación mejorada con información de descuento y moneda
+    const currency = getCurrentCurrency();
+    const discountAmount = Math.floor((totalAmountFromContext * couponObjClicked.discountPercent) / 100);
+    
+    toastHandler(
+      ToastType.Success, 
+      `🎫 Cupón ${couponObjClicked.couponCode} aplicado: ${couponObjClicked.discountPercent}% de descuento (${formatPriceWithCode(discountAmount)})`
+    );
   };
 
   const cancelCoupon = () => {
+    const currency = getCurrentCurrency();
+    toastHandler(ToastType.Warn, `🗑️ Cupón removido - Descuento cancelado`);
     setActiveCoupon(null);
-    toastHandler(ToastType.Warn, 'Cupón removido');
   };
 
   // Función para obtener icono según categoría del producto
@@ -99,7 +109,7 @@ const CheckoutDetails = ({
       message += `🏠 *Dirección completa:* ${selectedAddress.addressInfo}\n`;
       message += `👤 *Persona que recibe:* ${selectedAddress.receiverName}\n`;
       message += `📱 *Teléfono del receptor:* ${selectedAddress.receiverPhone}\n`;
-      message += `💰 *Costo de entrega:* ${formatPrice(deliveryCost)}\n`;
+      message += `💰 *Costo de entrega:* ${formatPriceWithCode(deliveryCost)}\n`;
     } else {
       message += `📦 *Modalidad:* Recoger en tienda\n`;
       message += `🏪 *Ubicación:* Yero Shop! - Santiago de Cuba\n`;
@@ -121,26 +131,27 @@ const CheckoutDetails = ({
       message += `${index + 1}. ${productIcon} *${item.name}*\n`;
       message += `   🎨 *Color:* ${colorHex}\n`;
       message += `   📊 *Cantidad:* ${item.qty} unidad${item.qty > 1 ? 'es' : ''}\n`;
-      message += `   💵 *Precio unitario:* ${formatPrice(item.price)}\n`;
-      message += `   💰 *Subtotal:* ${formatPrice(subtotal)}\n`;
+      message += `   💵 *Precio unitario:* ${formatPriceWithCode(item.price)}\n`;
+      message += `   💰 *Subtotal:* ${formatPriceWithCode(subtotal)}\n`;
       message += `   ─────────────────────────────────────────────────────────\n`;
     });
     
     // Resumen financiero profesional
-    message += `\n💳 *RESUMEN FINANCIERO (${currency.flag} ${currency.code})*\n`;
+    message += `\n💳 *RESUMEN FINANCIERO*\n`;
     message += `═══════════════════════════════════════════════════════════════\n`;
-    message += `🛍️ *Subtotal productos:* ${formatPrice(totalAmountFromContext)}\n`;
+    message += `🛍️ *Subtotal productos:* ${formatPriceWithCode(totalAmountFromContext)}\n`;
     
     if (activeCoupon) {
-      message += `🎫 *Descuento aplicado (${activeCoupon.couponCode}):* -${formatPrice(Math.abs(priceAfterCouponApplied))}\n`;
+      message += `🎫 *Descuento aplicado (${activeCoupon.couponCode} - ${activeCoupon.discountPercent}%):* -${formatPriceWithCode(Math.abs(priceAfterCouponApplied))}\n`;
     }
     
     if (deliveryCost > 0) {
-      message += `🚚 *Costo de entrega:* ${formatPrice(deliveryCost)}\n`;
+      message += `🚚 *Costo de entrega:* ${formatPriceWithCode(deliveryCost)}\n`;
     }
     
     message += `═══════════════════════════════════════════════════════════════\n`;
-    message += `💰 *TOTAL A PAGAR: ${formatPrice(finalPriceToPay)}*\n`;
+    message += `💰 *TOTAL A PAGAR: ${formatPriceWithCode(finalPriceToPay)}*\n`;
+    message += `💱 *Moneda: ${currency.flag} ${currency.name} (${currency.code})*\n`;
     message += `═══════════════════════════════════════════════════════════════\n\n`;
     
     // Información adicional profesional
@@ -159,7 +170,8 @@ const CheckoutDetails = ({
     message += `• Confirme la disponibilidad de los productos\n`;
     message += `• Verifique la dirección de entrega\n`;
     message += `• Coordine horario de entrega/recogida\n`;
-    message += `• Mantenga este número de pedido para referencia\n\n`;
+    message += `• Mantenga este número de pedido para referencia\n`;
+    message += `• Los precios están en ${currency.name} (${currency.code})\n\n`;
     
     message += `🏪 *Yero Shop!*\n`;
     message += `"La tienda online de compras hecha a tu medida" ✨\n`;
@@ -257,7 +269,7 @@ const CheckoutDetails = ({
                 onClick={cancelCoupon}
               />{' '}
               <p className={styles.couponText}>
-                🎫 Cupón {activeCoupon.couponCode} aplicado
+                🎫 Cupón {activeCoupon.couponCode} aplicado ({activeCoupon.discountPercent}%)
               </p>
             </div>
             <Price amount={priceAfterCouponApplied} />

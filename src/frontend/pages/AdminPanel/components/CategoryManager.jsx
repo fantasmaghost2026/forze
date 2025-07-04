@@ -22,10 +22,69 @@ const CategoryManager = () => {
 
   const [categoryForm, setCategoryForm] = useState(initialCategoryState);
 
-  // Cargar categorías desde el contexto
+  // CARGAR CATEGORÍAS CON SINCRONIZACIÓN MEJORADA
   useEffect(() => {
-    setLocalCategories(categoriesFromContext || []);
-  }, [categoriesFromContext]);
+    console.log('🔄 Cargando categorías en CategoryManager:', categoriesFromContext?.length || 0);
+    
+    // Cargar desde el contexto primero
+    if (categoriesFromContext && categoriesFromContext.length > 0) {
+      setLocalCategories(categoriesFromContext);
+    } else {
+      // Si no hay categorías en el contexto, intentar cargar desde localStorage
+      const savedConfig = localStorage.getItem('adminStoreConfig');
+      if (savedConfig) {
+        try {
+          const parsedConfig = JSON.parse(savedConfig);
+          if (parsedConfig.categories && parsedConfig.categories.length > 0) {
+            console.log('📦 Cargando categorías desde localStorage:', parsedConfig.categories.length);
+            setLocalCategories(parsedConfig.categories);
+            // Sincronizar con el contexto
+            updateCategoriesFromAdmin(parsedConfig.categories);
+          }
+        } catch (error) {
+          console.error('Error al cargar categorías desde localStorage:', error);
+        }
+      }
+    }
+  }, [categoriesFromContext, updateCategoriesFromAdmin]);
+
+  // ESCUCHAR EVENTOS DE ACTUALIZACIÓN DE CATEGORÍAS
+  useEffect(() => {
+    const handleCategoriesUpdate = (event) => {
+      const { categories: updatedCategories } = event.detail;
+      console.log('📡 Evento de actualización de categorías recibido en CategoryManager');
+      setLocalCategories(updatedCategories);
+    };
+
+    const handleConfigUpdate = () => {
+      console.log('📡 Evento de actualización de configuración recibido en CategoryManager');
+      const savedConfig = localStorage.getItem('adminStoreConfig');
+      if (savedConfig) {
+        try {
+          const parsedConfig = JSON.parse(savedConfig);
+          if (parsedConfig.categories) {
+            setLocalCategories(parsedConfig.categories);
+          }
+        } catch (error) {
+          console.error('Error al cargar categorías desde configuración:', error);
+        }
+      }
+    };
+
+    // Agregar listeners
+    window.addEventListener('categoriesUpdated', handleCategoriesUpdate);
+    window.addEventListener('categoriesConfigUpdated', handleCategoriesUpdate);
+    window.addEventListener('forceStoreUpdate', handleConfigUpdate);
+    window.addEventListener('adminConfigChanged', handleConfigUpdate);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('categoriesUpdated', handleCategoriesUpdate);
+      window.removeEventListener('categoriesConfigUpdated', handleCategoriesUpdate);
+      window.removeEventListener('forceStoreUpdate', handleConfigUpdate);
+      window.removeEventListener('adminConfigChanged', handleConfigUpdate);
+    };
+  }, []);
 
   // FUNCIÓN PARA MANTENER EL TAMAÑO ACTUAL DE LAS IMÁGENES (RESPONSIVO)
   const resizeImageToCurrentSize = (file, callback) => {
@@ -159,14 +218,14 @@ const CategoryManager = () => {
     resetForm();
   };
 
-  // Función para sincronización completa MEJORADA
+  // Función para sincronización completa MEJORADA CON PERSISTENCIA GARANTIZADA
   const performCompleteSync = (updatedCategories) => {
     console.log('🔄 Iniciando sincronización completa de categorías...');
     
     // 1. Actualizar estado local inmediatamente
     setLocalCategories(updatedCategories);
     
-    // 2. Actualizar en localStorage para persistencia inmediata
+    // 2. Actualizar en localStorage para persistencia inmediata con verificación
     const savedConfig = localStorage.getItem('adminStoreConfig') || '{}';
     let config = {};
     
@@ -179,7 +238,22 @@ const CategoryManager = () => {
 
     config.categories = updatedCategories;
     config.lastModified = new Date().toISOString();
+    
+    // Guardar con verificación
     localStorage.setItem('adminStoreConfig', JSON.stringify(config));
+    
+    // Verificar que se guardó correctamente
+    const verifyConfig = localStorage.getItem('adminStoreConfig');
+    if (verifyConfig) {
+      try {
+        const parsedVerify = JSON.parse(verifyConfig);
+        if (parsedVerify.categories && parsedVerify.categories.length === updatedCategories.length) {
+          console.log('✅ Categorías guardadas correctamente en localStorage');
+        }
+      } catch (error) {
+        console.error('Error en verificación de guardado:', error);
+      }
+    }
     
     // 3. Actualizar en el contexto de configuración para backup
     updateCategories(updatedCategories);
@@ -194,6 +268,11 @@ const CategoryManager = () => {
       }));
       
       window.dispatchEvent(new CustomEvent('forceStoreUpdate'));
+      
+      // NUEVO: Evento específico para cambios de configuración del admin
+      window.dispatchEvent(new CustomEvent('adminConfigChanged', { 
+        detail: { categories: updatedCategories, type: 'categories' } 
+      }));
       
       // Forzar re-renderizado adicional
       window.dispatchEvent(new CustomEvent('categoriesConfigUpdated', { 
@@ -304,6 +383,25 @@ const CategoryManager = () => {
         <p>Los cambios se aplican automáticamente en la tienda. Las imágenes mantienen el tamaño actual de las categorías existentes (400x300px responsivo). Las categorías deshabilitadas no aparecen en el inicio de la tienda. Para exportar los cambios permanentemente, ve a la sección "🗂️ Sistema Backup".</p>
       </div>
 
+      {/* INDICADOR DE ESTADO DE CATEGORÍAS */}
+      <div className={styles.statusIndicator}>
+        <h4>📊 Estado Actual de Categorías</h4>
+        <div className={styles.statusGrid}>
+          <div className={styles.statusItem}>
+            <span className={styles.statusNumber}>{localCategories.length}</span>
+            <span className={styles.statusLabel}>Total</span>
+          </div>
+          <div className={styles.statusItem}>
+            <span className={styles.statusNumber}>{localCategories.filter(c => !c.disabled).length}</span>
+            <span className={styles.statusLabel}>Activas</span>
+          </div>
+          <div className={styles.statusItem}>
+            <span className={styles.statusNumber}>{localCategories.filter(c => c.disabled).length}</span>
+            <span className={styles.statusLabel}>Deshabilitadas</span>
+          </div>
+        </div>
+      </div>
+
       {showForm && (
         <form className={styles.categoryForm} onSubmit={handleSubmit}>
           <div className={styles.formHeader}>
@@ -391,7 +489,16 @@ const CategoryManager = () => {
         </div>
 
         {localCategories.length === 0 ? (
-          <p className={styles.emptyMessage}>No hay categorías creadas aún.</p>
+          <div className={styles.emptyState}>
+            <h3>📂 No hay categorías creadas</h3>
+            <p>Crea tu primera categoría para organizar los productos de la tienda.</p>
+            <button 
+              className="btn btn-primary"
+              onClick={() => setShowForm(true)}
+            >
+              ➕ Crear Primera Categoría
+            </button>
+          </div>
         ) : (
           <div className={styles.categoriesGrid}>
             {localCategories.map(category => (

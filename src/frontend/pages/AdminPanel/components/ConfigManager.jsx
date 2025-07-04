@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { toastHandler } from '../../../utils/utils';
 import { ToastType } from '../../../constants/constants';
 import { useConfigContext } from '../../../contexts/ConfigContextProvider';
+import { useAllProductsContext } from '../../../contexts/ProductsContextProvider';
 import styles from './ConfigManager.module.css';
 
 const ConfigManager = () => {
   const { exportConfiguration, importConfiguration, resetConfiguration } = useConfigContext();
+  const { updateProductsFromAdmin, updateCategoriesFromAdmin } = useAllProductsContext();
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
@@ -29,9 +31,74 @@ const ConfigManager = () => {
     setIsImporting(true);
 
     try {
+      // Leer el archivo
+      const text = await file.text();
+      const config = JSON.parse(text);
+      
+      // Validar estructura del archivo
+      if (!config.storeInfo && !config.lastModified && !config.products && !config.categories) {
+        throw new Error('Archivo de configuración inválido');
+      }
+
+      // Importar la configuración
       await importConfiguration(file);
+
+      // SINCRONIZACIÓN MEJORADA: Actualizar productos y categorías si están en el archivo
+      if (config.products && Array.isArray(config.products)) {
+        console.log('🔄 Sincronizando productos desde configuración importada...');
+        updateProductsFromAdmin(config.products);
+        
+        // Guardar en localStorage inmediatamente
+        const savedConfig = localStorage.getItem('adminStoreConfig') || '{}';
+        let currentConfig = {};
+        try {
+          currentConfig = JSON.parse(savedConfig);
+        } catch (error) {
+          currentConfig = {};
+        }
+        
+        currentConfig.products = config.products;
+        localStorage.setItem('adminStoreConfig', JSON.stringify(currentConfig));
+        
+        toastHandler(ToastType.Success, `✅ ${config.products.length} productos importados y sincronizados`);
+      }
+
+      if (config.categories && Array.isArray(config.categories)) {
+        console.log('🔄 Sincronizando categorías desde configuración importada...');
+        updateCategoriesFromAdmin(config.categories);
+        
+        // Guardar en localStorage inmediatamente
+        const savedConfig = localStorage.getItem('adminStoreConfig') || '{}';
+        let currentConfig = {};
+        try {
+          currentConfig = JSON.parse(savedConfig);
+        } catch (error) {
+          currentConfig = {};
+        }
+        
+        currentConfig.categories = config.categories;
+        localStorage.setItem('adminStoreConfig', JSON.stringify(currentConfig));
+        
+        toastHandler(ToastType.Success, `✅ ${config.categories.length} categorías importadas y sincronizadas`);
+      }
+
+      // Importar mensajes si están disponibles
+      if (config.messages && typeof config.messages === 'object') {
+        localStorage.setItem('storeMessages', JSON.stringify(config.messages));
+        toastHandler(ToastType.Success, '✅ Mensajes importados exitosamente');
+      }
+
+      // Disparar eventos de sincronización
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('forceStoreUpdate'));
+        window.dispatchEvent(new CustomEvent('configurationImported', { 
+          detail: { config } 
+        }));
+      }, 100);
+
     } catch (error) {
-      toastHandler(ToastType.Error, 'Error al importar la configuración');
+      console.error('Error al importar configuración:', error);
+      toastHandler(ToastType.Error, 'Error al importar la configuración: ' + error.message);
     } finally {
       setIsImporting(false);
       event.target.value = '';
@@ -45,7 +112,24 @@ const ConfigManager = () => {
 
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Limpiar localStorage
+      localStorage.removeItem('adminStoreConfig');
+      localStorage.removeItem('storeMessages');
+      
+      // Restablecer configuración
       resetConfiguration();
+      
+      // Limpiar productos y categorías
+      updateProductsFromAdmin([]);
+      updateCategoriesFromAdmin([]);
+      
+      // Disparar eventos de sincronización
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('forceStoreUpdate'));
+        window.dispatchEvent(new CustomEvent('configurationReset'));
+      }, 100);
+      
     } catch (error) {
       toastHandler(ToastType.Error, 'Error al restablecer la configuración');
     }
@@ -53,7 +137,7 @@ const ConfigManager = () => {
 
   return (
     <div className={styles.configManager}>
-      <h2>Gestión de Configuración</h2>
+      <h2>💾 Gestión de Configuración</h2>
       
       <div className={styles.configSection}>
         <div className={styles.configCard}>
@@ -62,8 +146,8 @@ const ConfigManager = () => {
           </div>
           <div className={styles.cardContent}>
             <p>
-              Exporta toda la configuración de la tienda incluyendo productos, 
-              cupones, zonas de entrega y configuraciones generales en un archivo JSON.
+              Exporta toda la configuración de la tienda incluyendo productos, categorías,
+              cupones, zonas de entrega, mensajes y configuraciones generales en un archivo JSON.
             </p>
             <button 
               onClick={handleExport}
@@ -88,8 +172,8 @@ const ConfigManager = () => {
           </div>
           <div className={styles.cardContent}>
             <p>
-              Importa una configuración previamente exportada. Esto sobrescribirá 
-              toda la configuración actual de la tienda.
+              Importa una configuración previamente exportada. Esto sincronizará automáticamente
+              productos, categorías, mensajes y toda la configuración de la tienda.
             </p>
             <div className={styles.importContainer}>
               <input
@@ -107,7 +191,7 @@ const ConfigManager = () => {
                 {isImporting ? (
                   <span className={styles.loading}>
                     <span className="loader-2"></span>
-                    Importando...
+                    Importando y sincronizando...
                   </span>
                 ) : (
                   '📥 Seleccionar Archivo'
@@ -143,7 +227,10 @@ const ConfigManager = () => {
             <strong>Formato del archivo:</strong> JSON (.json)
           </div>
           <div className={styles.infoItem}>
-            <strong>Contenido incluido:</strong> Productos, cupones, zonas de entrega, configuración general
+            <strong>Contenido incluido:</strong> Productos, categorías, cupones, zonas de entrega, mensajes, configuración general
+          </div>
+          <div className={styles.infoItem}>
+            <strong>Sincronización automática:</strong> Los productos y categorías se sincronizan automáticamente al importar
           </div>
           <div className={styles.infoItem}>
             <strong>Compatibilidad:</strong> Solo archivos exportados desde esta versión del panel

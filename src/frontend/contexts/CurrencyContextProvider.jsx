@@ -27,7 +27,7 @@ const CurrencyContextProvider = ({ children }) => {
       const currency = CURRENCIES[currencyCode];
       toastHandler(
         ToastType.Success, 
-        `💱 Moneda cambiada a ${currency.flag} ${currency.name}`
+        `💱 Moneda cambiada a ${currency.flag} ${currency.name} (${currency.code})`
       );
     }
   };
@@ -52,7 +52,7 @@ const CurrencyContextProvider = ({ children }) => {
     return amount * rate;
   };
 
-  // Función para formatear precio con la moneda seleccionada
+  // Función para formatear precio SIEMPRE con código de moneda
   const formatPrice = (cupAmount, showCurrency = true) => {
     const convertedAmount = convertFromCUP(cupAmount);
     const currency = CURRENCIES[selectedCurrency];
@@ -72,15 +72,23 @@ const CurrencyContextProvider = ({ children }) => {
     }
 
     if (!showCurrency) {
-      return formattedAmount;
+      return `${formattedAmount} ${currency.code}`;
     }
 
-    // Retornar con símbolo de moneda
+    // SIEMPRE retornar con símbolo y código de moneda
+    let result;
     if (selectedCurrency === 'MLC') {
-      return `${formattedAmount} ${currency.symbol}`;
+      result = `${formattedAmount} ${currency.symbol} ${currency.code}`;
     } else {
-      return `${currency.symbol} ${formattedAmount}`;
+      result = `${currency.symbol}${formattedAmount} ${currency.code}`;
     }
+
+    return result;
+  };
+
+  // Función para formatear precio con código de moneda (mantener compatibilidad)
+  const formatPriceWithCode = (cupAmount) => {
+    return formatPrice(cupAmount, true);
   };
 
   // Función para obtener información de la moneda actual
@@ -110,6 +118,7 @@ const CurrencyContextProvider = ({ children }) => {
       convertFromCUP,
       convertToCUP,
       formatPrice,
+      formatPriceWithCode,
       getCurrentCurrency,
       getAvailableCurrencies,
       getCurrencySymbol,
