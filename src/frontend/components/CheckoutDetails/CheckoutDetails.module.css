@@ -262,6 +262,37 @@
   color: var(--primary-500);
 }
 
+.disabledInput {
+  background: var(--grey-100) !important;
+  color: var(--grey-500) !important;
+  cursor: not-allowed !important;
+}
+
+.couponWarning {
+  position: absolute;
+  left: 1rem;
+  top: 4rem;
+  right: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 2px solid #f59e0b;
+  border-radius: var(--borderRadius);
+  color: #92400e;
+  font-weight: 500;
+  font-size: 0.9rem;
+  z-index: 10;
+}
+
+.couponWarning span {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.couponWarning small {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
 .couponSuggestion {
   position: absolute;
   left: 1rem;

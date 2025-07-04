@@ -20,6 +20,7 @@ const CouponSearch = ({ activeCoupon, updateActiveCoupon }) => {
   const [couponSearchInput, setCouponSearchInput] = useState('');
   const {
     cartDetails: { totalAmount: totalAmountFromContext },
+    cart: cartFromContext,
   } = useAllProductsContext();
 
   const { storeConfig } = useConfigContext();
@@ -28,7 +29,59 @@ const CouponSearch = ({ activeCoupon, updateActiveCoupon }) => {
 
   const isMobile = useIsMobile();
 
+  // VERIFICAR SI TODOS LOS PRODUCTOS EN EL CARRITO PUEDEN USAR CUPONES
+  const canUseAnyCoupons = () => {
+    // Si el carrito está vacío, no se pueden usar cupones
+    if (cartFromContext.length === 0) {
+      return false;
+    }
+
+    // Obtener productos actualizados desde localStorage (configuración del admin)
+    const savedConfig = localStorage.getItem('adminStoreConfig');
+    let adminProducts = [];
+    
+    if (savedConfig) {
+      try {
+        const parsedConfig = JSON.parse(savedConfig);
+        adminProducts = parsedConfig.products || [];
+      } catch (error) {
+        console.error('Error al cargar productos del admin:', error);
+      }
+    }
+
+    // Verificar cada producto en el carrito
+    const allProductsCanUseCoupons = cartFromContext.every(cartItem => {
+      // Extraer el ID del producto (sin el color)
+      const productId = cartItem._id.split('#')[0] || cartItem._id;
+      
+      // Buscar el producto en la configuración del admin (datos más actualizados)
+      const adminProduct = adminProducts.find(p => p._id === productId);
+      
+      // Si encontramos el producto en la configuración del admin, usar esos datos
+      if (adminProduct) {
+        console.log(`🔍 Producto ${adminProduct.name}: puede usar cupones = ${adminProduct.canUseCoupons !== false}`);
+        return adminProduct.canUseCoupons !== false; // Por defecto true si no está definido
+      }
+      
+      // Si no está en la configuración del admin, usar los datos del carrito
+      console.log(`⚠️ Producto ${cartItem.name}: usando datos del carrito = ${cartItem.canUseCoupons !== false}`);
+      return cartItem.canUseCoupons !== false; // Por defecto true si no está definido
+    });
+
+    console.log(`🎫 ¿Todos los productos pueden usar cupones? ${allProductsCanUseCoupons}`);
+    return allProductsCanUseCoupons;
+  };
+
+  const couponsEnabled = canUseAnyCoupons();
+
   const handleSearchFocus = () => {
+    if (!couponsEnabled) {
+      toastHandler(
+        ToastType.Warn,
+        'Los cupones no están disponibles para algunos productos en tu carrito'
+      );
+      return;
+    }
     setIsCouponsSuggestionVisible(true);
   };
 
@@ -38,6 +91,14 @@ const CouponSearch = ({ activeCoupon, updateActiveCoupon }) => {
   };
 
   const handleCouponClick = (couponClicked) => {
+    if (!couponsEnabled) {
+      toastHandler(
+        ToastType.Warn,
+        'Los cupones no están disponibles para algunos productos en tu carrito'
+      );
+      return;
+    }
+
     //  for mobile, there is no tooltip and buttons not disabled for the following condition
     if (
       isMobile &&
@@ -64,6 +125,14 @@ const CouponSearch = ({ activeCoupon, updateActiveCoupon }) => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+
+    if (!couponsEnabled) {
+      toastHandler(
+        ToastType.Warn,
+        'Los cupones no están disponibles para algunos productos en tu carrito'
+      );
+      return;
+    }
 
     setIsCouponsSuggestionVisible(false);
 
@@ -121,20 +190,32 @@ const CouponSearch = ({ activeCoupon, updateActiveCoupon }) => {
       <AiFillTag />
       <div>
         <input
-          className='form-input'
+          className={`form-input ${!couponsEnabled ? styles.disabledInput : ''}`}
           type='search'
           onFocus={handleSearchFocus}
           onBlur={handleSearchBlur}
-          placeholder='Ingresa código de cupón'
+          placeholder={couponsEnabled ? 'Ingresa código de cupón' : 'Cupones no disponibles'}
           onChange={(e) => setCouponSearchInput(e.target.value)}
           value={couponSearchInput}
+          disabled={!couponsEnabled}
         />
-        <button disabled={!couponSearchInput} type='submit' className='btn'>
+        <button 
+          disabled={!couponSearchInput || !couponsEnabled} 
+          type='submit' 
+          className='btn'
+        >
           Aplicar
         </button>
       </div>
 
-      {isCouponsSuggestionVisible && (
+      {!couponsEnabled && (
+        <div className={styles.couponWarning}>
+          <span>⚠️ Algunos productos en tu carrito no pueden usar cupones de descuento</span>
+          <small>💡 Los cupones solo se aplican si TODOS los productos del carrito los permiten</small>
+        </div>
+      )}
+
+      {isCouponsSuggestionVisible && couponsEnabled && (
         <div className={styles.couponSuggestion}>
           {COUPONS.map((singleCoupon) => {
             const isButtonDisabled =

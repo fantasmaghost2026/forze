@@ -26,7 +26,8 @@ const ProductManager = () => {
     colors: [{ color: '#000000', colorQuantity: 0 }],
     image: '',
     isShippingAvailable: true,
-    featured: false
+    featured: false,
+    canUseCoupons: true // NUEVA PROPIEDAD PARA CUPONES
   });
 
   // Cargar productos desde el contexto
@@ -154,7 +155,8 @@ const ProductManager = () => {
       colors: product.colors,
       image: product.image,
       isShippingAvailable: product.isShippingAvailable,
-      featured: product.featured || false
+      featured: product.featured || false,
+      canUseCoupons: product.canUseCoupons !== undefined ? product.canUseCoupons : true // CARGAR CONFIGURACIÓN DE CUPONES
     });
     setIsEditing(true);
     setHasUnsavedChanges(false);
@@ -205,7 +207,7 @@ const ProductManager = () => {
     // Calcular stock total basado en los colores
     const totalStock = formData.colors.reduce((total, color) => total + parseInt(color.colorQuantity || 0), 0);
 
-    // Crear producto con estructura exacta de products.js
+    // Crear producto con estructura exacta de products.js INCLUYENDO CUPONES
     const newProduct = {
       "_id": selectedProduct ? selectedProduct._id : uuid(),
       "name": formData.name.trim(),
@@ -224,6 +226,7 @@ const ProductManager = () => {
       "image": formData.image,
       "isShippingAvailable": formData.isShippingAvailable,
       "featured": formData.featured,
+      "canUseCoupons": formData.canUseCoupons, // NUEVA PROPIEDAD
       "id": selectedProduct ? selectedProduct.id : (localProducts.length + 1).toString()
     };
 
@@ -328,7 +331,8 @@ const ProductManager = () => {
       colors: [{ color: '#000000', colorQuantity: 0 }],
       image: '',
       isShippingAvailable: true,
-      featured: false
+      featured: false,
+      canUseCoupons: true // VALOR POR DEFECTO PARA CUPONES
     });
     setSelectedProduct(null);
     setIsEditing(false);
@@ -382,7 +386,7 @@ const ProductManager = () => {
 
       <div className={styles.infoBox}>
         <h4>ℹ️ Información Importante</h4>
-        <p>Los cambios se aplican automáticamente en la tienda. Las imágenes mantienen el tamaño actual de los productos existentes (600x450px responsivo). Los productos sin "Envío Disponible" no permiten entrega a domicilio. Para exportar los cambios permanentemente, ve a la sección "🗂️ Sistema Backup".</p>
+        <p>Los cambios se aplican automáticamente en la tienda. Las imágenes mantienen el tamaño actual de los productos existentes (600x450px responsivo). Los productos sin "Envío Disponible" no permiten entrega a domicilio. La configuración de cupones controla si el producto puede usar descuentos. Para exportar los cambios permanentemente, ve a la sección "🗂️ Sistema Backup".</p>
       </div>
 
       {isEditing ? (
@@ -595,6 +599,18 @@ const ProductManager = () => {
             <label className={styles.checkboxLabel}>
               <input
                 type="checkbox"
+                name="canUseCoupons"
+                checked={formData.canUseCoupons}
+                onChange={handleInputChange}
+              />
+              🎫 Puede Usar Cupones de Descuento
+              <small className={styles.couponNote}>
+                ⚡ Los cupones solo se aplicarán si TODOS los productos del carrito tienen esta opción habilitada
+              </small>
+            </label>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
                 name="featured"
                 checked={formData.featured}
                 onChange={handleInputChange}
@@ -639,6 +655,9 @@ const ProductManager = () => {
                   <p className={styles.productCompany}>🏢 {product.company}</p>
                   <p className={`${styles.productShipping} ${product.isShippingAvailable ? styles.shippingEnabled : styles.shippingDisabled}`}>
                     🚚 {product.isShippingAvailable ? 'Envío disponible' : 'Sin envío (Solo recogida)'}
+                  </p>
+                  <p className={`${styles.productCoupons} ${product.canUseCoupons !== false ? styles.couponsEnabled : styles.couponsDisabled}`}>
+                    🎫 {product.canUseCoupons !== false ? 'Puede usar cupones' : 'Sin cupones de descuento'}
                   </p>
                   {product.featured && <span className={styles.featuredBadge}>⭐ Destacado</span>}
                 </div>
