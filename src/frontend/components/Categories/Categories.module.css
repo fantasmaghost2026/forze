@@ -2,7 +2,9 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
+  position: relative;
 }
+
 .category {
   display: grid;
   place-items: center;
@@ -18,6 +20,27 @@
   text-transform: capitalize;
   position: relative;
   overflow: hidden;
+  animation: categorySlideUp 0.8s ease-out;
+  animation-fill-mode: both;
+}
+
+/* Animación de entrada escalonada */
+.category:nth-child(1) { animation-delay: 0.1s; }
+.category:nth-child(2) { animation-delay: 0.2s; }
+.category:nth-child(3) { animation-delay: 0.3s; }
+.category:nth-child(4) { animation-delay: 0.4s; }
+.category:nth-child(5) { animation-delay: 0.5s; }
+.category:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes categorySlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px) rotateX(15deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+  }
 }
 
 .categoryContainer img {
@@ -25,6 +48,7 @@
   width: 100%;
   object-fit: contain;
   filter: blur(2.5px);
+  transition: var(--transition);
 }
 
 .category div {
@@ -38,6 +62,109 @@
   text-align: center;
   display: grid;
   place-content: center;
+  transition: var(--transition);
+  backdrop-filter: blur(1px);
+}
+
+/* Efectos de hover mejorados */
+.category:hover {
+  box-shadow: var(--shadow-4);
+  transform: translateY(-8px) scale(1.03);
+  animation: categoryHover 0.6s ease-in-out;
+}
+
+@keyframes categoryHover {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.02) rotateZ(1deg);
+  }
+  100% {
+    transform: translateY(-8px) scale(1.03) rotateZ(0deg);
+  }
+}
+
+.category:hover img {
+  filter: blur(1px) brightness(1.1);
+  transform: scale(1.1);
+}
+
+.category:hover div {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* Efecto de brillo en hover */
+.category::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+  z-index: 2;
+}
+
+.category:hover::before {
+  left: 100%;
+}
+
+/* Efecto de partículas flotantes para categorías */
+.categoryContainer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 15% 25%, rgba(16, 185, 129, 0.1) 2px, transparent 2px),
+    radial-gradient(circle at 85% 75%, rgba(16, 185, 129, 0.1) 2px, transparent 2px),
+    radial-gradient(circle at 45% 45%, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
+  background-size: 60px 60px, 80px 80px, 40px 40px;
+  animation: categoriesParticles 15s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes categoriesParticles {
+  0% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: translateX(-60px) translateY(-60px) rotate(360deg);
+  }
+}
+
+/* Efecto de fondo dinámico */
+.categoryContainer::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  left: -30px;
+  right: -30px;
+  bottom: -30px;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 60%),
+    radial-gradient(circle at 70% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 60%);
+  animation: categoryBackground 10s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -2;
+}
+
+@keyframes categoryBackground {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) rotate(2deg);
+  }
 }
 
 @media screen and (min-width: 768px) {
@@ -46,8 +173,33 @@
     gap: 1.5rem;
   }
 
+  .category {
+    font-size: 1.4rem;
+  }
+  
+  /* Efecto de pulsación suave en desktop */
+  .category {
+    animation: categoryPulse 4s ease-in-out infinite;
+  }
+  
+  @keyframes categoryPulse {
+    0%, 100% {
+      box-shadow: var(--shadow-2);
+    }
+    50% {
+      box-shadow: var(--shadow-3);
+    }
+  }
+  
   .category:hover {
-    box-shadow: var(--shadow-4);
-    scale: 1.05;
+    animation: none;
+  }
+}
+
+/* Efectos adicionales para móvil */
+@media screen and (max-width: 767px) {
+  .category:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
   }
 }

@@ -12,7 +12,7 @@ const FeaturedProducts = () => {
 
   return (
     <section className='section'>
-      <Title>Productos Destacados</Title>
+      <Title variant="featured">Productos Destacados</Title>
 
       <div className={`container ${styles.featuredCenter}`}>
         {featuredProductsList.map((singleProduct) => (
