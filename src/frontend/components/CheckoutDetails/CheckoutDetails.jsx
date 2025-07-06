@@ -105,8 +105,8 @@ const CheckoutDetails = ({
     // Detectar si es móvil en general
     const isMobile = /Mobi|Android/i.test(userAgent) || isIOS;
     
-    // Detectar si tiene WhatsApp Web disponible (navegadores de escritorio)
-    const hasWhatsAppWeb = !isMobile || isMacOS;
+    // Detectar si tiene WhatsApp instalado (aproximación)
+    const hasWhatsApp = isMobile;
     
     return {
       isIOS,
@@ -114,52 +114,149 @@ const CheckoutDetails = ({
       isAndroid,
       isWindows,
       isMobile,
-      hasWhatsAppWeb,
-      userAgent
+      hasWhatsApp,
+      isAppleDevice: isIOS || isMacOS
     };
   };
 
-  // FUNCIÓN MEJORADA PARA LIMPIAR Y FORMATEAR NÚMERO DE WHATSAPP
-  const cleanWhatsAppNumber = (number) => {
-    // Remover todos los caracteres que no sean números o el símbolo +
-    let cleaned = number.replace(/[^\d+]/g, '');
+  // FUNCIÓN MEJORADA PARA GENERAR URL DE WHATSAPP COMPATIBLE CON TODOS LOS DISPOSITIVOS
+  const generateWhatsAppURL = (message, phoneNumber) => {
+    const device = detectDevice();
+    const cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
+    const encodedMessage = encodeURIComponent(message);
     
-    // Asegurar que comience con +
-    if (!cleaned.startsWith('+')) {
-      cleaned = '+' + cleaned;
+    console.log('🔍 Dispositivo detectado:', device);
+    console.log('📱 Número limpio:', cleanPhone);
+    
+    // Para dispositivos iOS (iPhone, iPad)
+    if (device.isIOS) {
+      // Intentar múltiples métodos para iOS
+      const iosUrls = [
+        `whatsapp://send?phone=${cleanPhone}&text=${encodedMessage}`,
+        `https://wa.me/${cleanPhone}?text=${encodedMessage}`,
+        `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`
+      ];
+      
+      console.log('📱 URLs para iOS generadas:', iosUrls);
+      return iosUrls;
     }
     
-    // Para Cuba (+53), asegurar formato correcto
-    if (cleaned.startsWith('+53')) {
-      // Remover espacios y caracteres especiales después del código de país
-      cleaned = cleaned.replace(/(\+53)\s*/, '+53');
+    // Para macOS (Safari, Chrome en Mac)
+    if (device.isMacOS) {
+      const macUrls = [
+        `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`,
+        `https://wa.me/${cleanPhone}?text=${encodedMessage}`,
+        `whatsapp://send?phone=${cleanPhone}&text=${encodedMessage}`
+      ];
+      
+      console.log('💻 URLs para macOS generadas:', macUrls);
+      return macUrls;
     }
     
-    console.log(`📱 Número original: ${number}, Número limpio: ${cleaned}`);
-    return cleaned;
+    // Para Android
+    if (device.isAndroid) {
+      const androidUrls = [
+        `https://wa.me/${cleanPhone}?text=${encodedMessage}`,
+        `whatsapp://send?phone=${cleanPhone}&text=${encodedMessage}`,
+        `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`
+      ];
+      
+      console.log('🤖 URLs para Android generadas:', androidUrls);
+      return androidUrls;
+    }
+    
+    // Para Windows y otros sistemas
+    const defaultUrls = [
+      `https://wa.me/${cleanPhone}?text=${encodedMessage}`,
+      `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`,
+      `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`
+    ];
+    
+    console.log('🖥️ URLs por defecto generadas:', defaultUrls);
+    return defaultUrls;
   };
 
-  // FUNCIÓN MEJORADA PARA CODIFICAR MENSAJE PARA URL
-  const encodeMessageForURL = (message) => {
-    // Usar encodeURIComponent para una codificación más robusta
-    return encodeURIComponent(message)
-      // Reemplazos adicionales para mejor compatibilidad
-      .replace(/'/g, '%27')
-      .replace(/"/g, '%22')
-      .replace(/\(/g, '%28')
-      .replace(/\)/g, '%29')
-      .replace(/\*/g, '%2A')
-      .replace(/!/g, '%21')
-      .replace(/~/g, '%7E');
+  // FUNCIÓN MEJORADA PARA INTENTAR ABRIR WHATSAPP CON MÚLTIPLES MÉTODOS
+  const tryOpenWhatsApp = async (urls, orderNumber) => {
+    const device = detectDevice();
+    
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i];
+      console.log(`🔄 Intentando método ${i + 1}/${urls.length}:`, url);
+      
+      try {
+        // Para dispositivos iOS, usar un enfoque especial
+        if (device.isIOS && i === 0) {
+          // Primer intento: URL scheme de WhatsApp
+          const iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.src = url;
+          document.body.appendChild(iframe);
+          
+          // Limpiar después de un tiempo
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+          }, 2000);
+          
+          // Esperar un poco para ver si funciona
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Si llegamos aquí, probablemente funcionó
+          console.log('✅ Método iOS iframe exitoso');
+          return true;
+        }
+        
+        // Para todos los dispositivos: intentar abrir en nueva ventana/pestaña
+        const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+        
+        if (newWindow) {
+          console.log('✅ Ventana abierta exitosamente');
+          
+          // Para dispositivos móviles, cerrar la ventana después de un tiempo
+          if (device.isMobile) {
+            setTimeout(() => {
+              try {
+                newWindow.close();
+              } catch (e) {
+                console.log('ℹ️ No se pudo cerrar la ventana automáticamente');
+              }
+            }, 3000);
+          }
+          
+          return true;
+        }
+        
+        console.log('⚠️ No se pudo abrir ventana, intentando siguiente método...');
+        
+      } catch (error) {
+        console.log(`❌ Error en método ${i + 1}:`, error);
+        
+        // Si no es el último intento, continuar
+        if (i < urls.length - 1) {
+          console.log('🔄 Intentando siguiente método...');
+          continue;
+        }
+      }
+      
+      // Pequeña pausa entre intentos
+      if (i < urls.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+    
+    // Si todos los métodos fallaron
+    console.log('❌ Todos los métodos fallaron');
+    return false;
   };
 
-  // FUNCIÓN PRINCIPAL MEJORADA PARA ENVIAR A WHATSAPP
   const sendToWhatsApp = async (orderData) => {
     const orderNumber = generateOrderNumber();
     const currency = getCurrentCurrency();
     const device = detectDevice();
     
-    console.log('📱 Información del dispositivo:', device);
+    console.log('🚀 Iniciando envío a WhatsApp...');
+    console.log('📱 Dispositivo:', device);
+    console.log('📞 Número de WhatsApp:', STORE_WHATSAPP);
     
     let message = `🛒 *NUEVO PEDIDO #${orderNumber}*\n\n`;
     message += `═══════════════════════════════════════════════════════════════\n`;
@@ -204,7 +301,7 @@ const CheckoutDetails = ({
       message += `   📊 *Cantidad:* ${item.qty} unidad${item.qty > 1 ? 'es' : ''}\n`;
       message += `   💵 *Precio unitario:* ${formatPriceWithCode(item.price)}\n`;
       message += `   💰 *Subtotal:* ${formatPriceWithCode(subtotal)}\n`;
-      message += `   ─────────────────────────────────────────────────────────\n`;
+      message += `   ───────────────────────────────────\n`;
     });
     
     // Resumen financiero profesional
@@ -244,127 +341,50 @@ const CheckoutDetails = ({
     message += `• Mantenga este número de pedido para referencia\n`;
     message += `• Los precios están en ${currency.name} (${currency.code})\n\n`;
     
+    message += `───────────────────────────────────\n`;
     message += `🏪 *Yero Shop!*\n`;
     message += `"La tienda online de compras hecha a tu medida" ✨\n`;
     message += `📍 Santiago de Cuba, Cuba\n`;
     message += `📱 WhatsApp: ${STORE_WHATSAPP}\n`;
-    message += `🌐 Tienda online: https://yeroshop.vercel.app\n\n`;
+    message += `🌐 Tienda online: https://yeroshop.vercel.app\n`;
+    message += `───────────────────────────────────\n\n`;
     message += `¡Gracias por confiar en nosotros! 🙏\n`;
     message += `Su satisfacción es nuestra prioridad 💯`;
 
-    // Limpiar y formatear el número de WhatsApp
-    const cleanedNumber = cleanWhatsAppNumber(STORE_WHATSAPP);
+    // Generar URLs según el dispositivo
+    const whatsappUrls = generateWhatsAppURL(message, STORE_WHATSAPP);
     
-    // Codificar el mensaje para URL
-    const encodedMessage = encodeMessageForURL(message);
-    
-    // CONSTRUIR URLs ESPECÍFICAS PARA CADA PLATAFORMA
-    let whatsappUrls = [];
-    
-    if (device.isIOS) {
-      // Para iOS: Intentar múltiples esquemas de URL
-      whatsappUrls = [
-        `whatsapp://send?phone=${cleanedNumber}&text=${encodedMessage}`,
-        `https://wa.me/${cleanedNumber.replace(/\+/g, '')}?text=${encodedMessage}`,
-        `https://api.whatsapp.com/send?phone=${cleanedNumber.replace(/\+/g, '')}&text=${encodedMessage}`
-      ];
-      console.log('📱 Detectado iOS - Usando esquemas específicos para iPhone/iPad');
-    } else if (device.isMacOS) {
-      // Para macOS: Preferir WhatsApp Web y app nativa
-      whatsappUrls = [
-        `https://web.whatsapp.com/send?phone=${cleanedNumber.replace(/\+/g, '')}&text=${encodedMessage}`,
-        `whatsapp://send?phone=${cleanedNumber}&text=${encodedMessage}`,
-        `https://wa.me/${cleanedNumber.replace(/\+/g, '')}?text=${encodedMessage}`
-      ];
-      console.log('💻 Detectado macOS - Usando WhatsApp Web y app nativa');
+    // Mostrar notificación específica según el dispositivo
+    if (device.isAppleDevice) {
+      toastHandler(ToastType.Info, `📱 Abriendo WhatsApp en dispositivo Apple...`);
     } else if (device.isAndroid) {
-      // Para Android: Esquema nativo y web
-      whatsappUrls = [
-        `whatsapp://send?phone=${cleanedNumber}&text=${encodedMessage}`,
-        `https://wa.me/${cleanedNumber.replace(/\+/g, '')}?text=${encodedMessage}`,
-        `https://api.whatsapp.com/send?phone=${cleanedNumber.replace(/\+/g, '')}&text=${encodedMessage}`
-      ];
-      console.log('🤖 Detectado Android - Usando esquemas nativos');
+      toastHandler(ToastType.Info, `🤖 Abriendo WhatsApp en Android...`);
     } else {
-      // Para otros sistemas (Windows, Linux, etc.): WhatsApp Web
-      whatsappUrls = [
-        `https://web.whatsapp.com/send?phone=${cleanedNumber.replace(/\+/g, '')}&text=${encodedMessage}`,
-        `https://wa.me/${cleanedNumber.replace(/\+/g, '')}?text=${encodedMessage}`,
-        `https://api.whatsapp.com/send?phone=${cleanedNumber.replace(/\+/g, '')}&text=${encodedMessage}`
-      ];
-      console.log('🖥️ Detectado sistema de escritorio - Usando WhatsApp Web');
+      toastHandler(ToastType.Info, `💻 Abriendo WhatsApp Web...`);
     }
     
-    // FUNCIÓN PARA INTENTAR ABRIR WHATSAPP CON FALLBACKS
-    const tryOpenWhatsApp = async () => {
-      for (let i = 0; i < whatsappUrls.length; i++) {
-        const url = whatsappUrls[i];
-        console.log(`📱 Intentando abrir WhatsApp (intento ${i + 1}):`, url);
-        
-        try {
-          // Para iOS y esquemas personalizados, usar un enfoque diferente
-          if (device.isIOS && url.startsWith('whatsapp://')) {
-            // Crear un enlace temporal y hacer clic en él
-            const tempLink = document.createElement('a');
-            tempLink.href = url;
-            tempLink.target = '_blank';
-            tempLink.rel = 'noopener noreferrer';
-            
-            // Agregar al DOM temporalmente
-            document.body.appendChild(tempLink);
-            tempLink.click();
-            document.body.removeChild(tempLink);
-            
-            // Esperar un poco para ver si se abrió
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Si llegamos aquí, probablemente funcionó
-            console.log('✅ WhatsApp abierto exitosamente en iOS');
-            return true;
-          } else {
-            // Para otros casos, usar window.open
-            const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-            
-            // Verificar si se abrió correctamente
-            if (newWindow && !newWindow.closed) {
-              console.log('✅ WhatsApp abierto exitosamente');
-              return true;
-            } else if (newWindow === null) {
-              console.log('⚠️ Popup bloqueado, intentando siguiente método...');
-              continue;
-            }
-          }
-        } catch (error) {
-          console.log(`❌ Error en intento ${i + 1}:`, error);
-          continue;
-        }
-      }
-      
-      // Si todos los intentos fallaron
-      console.log('❌ No se pudo abrir WhatsApp con ningún método');
-      return false;
-    };
+    // Intentar abrir WhatsApp con múltiples métodos
+    const success = await tryOpenWhatsApp(whatsappUrls, orderNumber);
     
-    // INTENTAR ABRIR WHATSAPP
-    const success = await tryOpenWhatsApp();
-    
-    if (!success) {
-      // Si no se pudo abrir automáticamente, mostrar opciones manuales
-      const fallbackMessage = `No se pudo abrir WhatsApp automáticamente. 
+    if (success) {
+      console.log('✅ WhatsApp abierto exitosamente');
+      toastHandler(ToastType.Success, `✅ Pedido #${orderNumber} enviado a WhatsApp`);
+    } else {
+      console.log('❌ No se pudo abrir WhatsApp automáticamente');
       
-Puedes copiar este enlace y abrirlo manualmente:
-${whatsappUrls[1]}
-
-O buscar el contacto ${STORE_WHATSAPP} en WhatsApp y enviar el mensaje del pedido.`;
+      // Fallback: mostrar información manual
+      const fallbackMessage = device.isAppleDevice 
+        ? `📱 Por favor, abre WhatsApp manualmente y envía un mensaje a ${STORE_WHATSAPP} con el número de pedido #${orderNumber}`
+        : `💻 Por favor, abre WhatsApp Web o la aplicación y contacta a ${STORE_WHATSAPP} con el pedido #${orderNumber}`;
       
-      if (confirm(fallbackMessage)) {
-        // Copiar al portapapeles si es posible
-        try {
-          await navigator.clipboard.writeText(whatsappUrls[1]);
-          toastHandler(ToastType.Success, '📋 Enlace copiado al portapapeles');
-        } catch (error) {
-          console.log('No se pudo copiar al portapapeles:', error);
-        }
+      toastHandler(ToastType.Warn, fallbackMessage);
+      
+      // Copiar número al portapapeles como ayuda adicional
+      try {
+        await navigator.clipboard.writeText(STORE_WHATSAPP);
+        toastHandler(ToastType.Info, `📋 Número de WhatsApp copiado: ${STORE_WHATSAPP}`);
+      } catch (error) {
+        console.log('No se pudo copiar al portapapeles:', error);
       }
     }
     
@@ -400,7 +420,7 @@ O buscar el contacto ${STORE_WHATSAPP} en WhatsApp y enviar el mensaje del pedid
       updateCheckoutStatus({ showSuccessMsg: true });
 
       Popper();
-      toastHandler(ToastType.Success, `🎉 Pedido #${orderNumber} enviado exitosamente`);
+      toastHandler(ToastType.Success, `🎉 Pedido #${orderNumber} procesado exitosamente`);
 
       timer.current = setTimeout(() => {
         updateCheckoutStatus({ showSuccessMsg: false });
@@ -437,7 +457,7 @@ O buscar el contacto ${STORE_WHATSAPP} en WhatsApp y enviar el mensaje del pedid
           <span>
             🛍️ Precio ({totalCountFromContext} artículo{totalCountFromContext > 1 && 's'})
           </span>
-          <Price amount={totalAmountFromContext} showCurrencyCode={true} />
+          <Price amount={totalAmountFromContext} />
         </div>
 
         {activeCoupon && (
@@ -452,7 +472,7 @@ O buscar el contacto ${STORE_WHATSAPP} en WhatsApp y enviar el mensaje del pedid
                 🎫 Cupón {activeCoupon.couponCode} aplicado ({activeCoupon.discountPercent}%)
               </p>
             </div>
-            <Price amount={priceAfterCouponApplied} showCurrencyCode={true} />
+            <Price amount={priceAfterCouponApplied} />
           </div>
         )}
 
@@ -463,7 +483,7 @@ O buscar el contacto ${STORE_WHATSAPP} en WhatsApp y enviar el mensaje del pedid
               : '📦 Gastos de Envío'
             }
           </span>
-          <Price amount={deliveryCost} showCurrencyCode={true} />
+          <Price amount={deliveryCost} />
         </div>
       </div>
 
@@ -471,7 +491,7 @@ O buscar el contacto ${STORE_WHATSAPP} en WhatsApp y enviar el mensaje del pedid
 
       <div className={`${styles.row} ${styles.totalPrice}`}>
         <span>💰 Precio Total</span>
-        <Price amount={finalPriceToPay} showCurrencyCode={true} />
+        <Price amount={finalPriceToPay} />
       </div>
 
       <button 
@@ -488,7 +508,7 @@ O buscar el contacto ${STORE_WHATSAPP} en WhatsApp y enviar el mensaje del pedid
           <>
             <span className={styles.whatsappIcon}>📱</span>
             Realizar Pedido por WhatsApp
-          </span>
+          </>
         )}
       </button>
     </article>

@@ -88,6 +88,47 @@ option {
   justify-content: space-between;
   margin-top: 0;
   color: var(--grey-500);
+  font-size: 0.8rem;
+}
+
+.priceInfo {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: var(--primary-50);
+  border-radius: var(--borderRadius);
+  border: 1px solid var(--primary-200);
+}
+
+.priceInfo small {
+  color: var(--primary-600);
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.currentRange {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--green-light);
+  border-radius: var(--borderRadius);
+  border: 1px solid var(--green-medium);
+  text-align: center;
+}
+
+.currentRange strong {
+  color: var(--green-dark);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.noOptions {
+  color: var(--grey-500);
+  font-style: italic;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1rem;
+  background: var(--grey-50);
+  border-radius: var(--borderRadius);
+  margin: 0.5rem 0;
 }
 
 @media screen and (min-width: 768px) {
@@ -96,6 +137,18 @@ option {
     top: calc(var(--nav-height) - 1rem);
     width: 350px;
     margin-left: -2rem;
+  }
+
+  .flexSpaceBtwn {
+    font-size: 0.9rem;
+  }
+
+  .priceInfo small {
+    font-size: 0.8rem;
+  }
+
+  .currentRange strong {
+    font-size: 0.9rem;
   }
 }
 

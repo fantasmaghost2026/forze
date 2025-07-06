@@ -25,25 +25,47 @@ const BackupManager = () => {
       }
     }
 
+    // Generar FOOTER_LINKS dinámicamente
+    const footerLinksArray = finalStoreConfig.footerLinks || [
+      {
+        id: 1,
+        icon: 'AiOutlineTwitter',
+        url: 'https://twitter.com/Swastik2001',
+        label: 'Twitter'
+      },
+      {
+        id: 2,
+        icon: 'AiFillLinkedin', 
+        url: 'https://www.linkedin.com/in/swastik-patro-2a54bb19b/',
+        label: 'LinkedIn'
+      },
+      {
+        id: 3,
+        icon: 'AiFillGithub',
+        url: 'https://github.com/swastikpatro',
+        label: 'GitHub'
+      }
+    ];
+
+    const footerLinksCode = footerLinksArray.map(link => `  {
+    id: ${link.id},
+    icon: <${link.icon} />,
+    url: '${link.url}',
+  }`).join(',\n');
+
+    // Generar CURRENCIES dinámicamente
+    const currenciesObject = finalStoreConfig.currencies || {
+      CUP: { code: 'CUP', name: 'Peso Cubano', symbol: '$', flag: '🇨🇺', rate: 1 },
+      USD: { code: 'USD', name: 'Dólar Estadounidense', symbol: '$', flag: '🇺🇸', rate: 384 },
+      EUR: { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺', rate: 425 },
+      MLC: { code: 'MLC', name: 'Moneda Libremente Convertible', symbol: 'MLC', flag: '🏦', rate: 250 }
+    };
+
     const constantsContent = `import { AiFillGithub, AiFillLinkedin, AiOutlineTwitter } from 'react-icons/ai';
 import { v4 as uuid } from 'uuid';
 
 export const FOOTER_LINKS = [
-  {
-    id: 1,
-    icon: <AiOutlineTwitter />,
-    url: 'https://twitter.com/Swastik2001',
-  },
-  {
-    id: 2,
-    icon: <AiFillLinkedin />,
-    url: 'https://www.linkedin.com/in/swastik-patro-2a54bb19b/',
-  },
-  {
-    id: 3,
-    icon: <AiFillGithub />,
-    url: 'https://github.com/swastikpatro',
-  },
+${footerLinksCode}
 ];
 
 export const ToastType = {
@@ -205,37 +227,8 @@ export const PRODUCT_CATEGORY_ICONS = {
   'default': '📦'
 };
 
-// CONSTANTES DE MONEDA
-export const CURRENCIES = {
-  CUP: {
-    code: 'CUP',
-    name: 'Peso Cubano',
-    symbol: '$',
-    flag: '🇨🇺',
-    rate: 1,
-  },
-  USD: {
-    code: 'USD',
-    name: 'Dólar Estadounidense',
-    symbol: '$',
-    flag: '🇺🇸',
-    rate: 320,
-  },
-  EUR: {
-    code: 'EUR',
-    name: 'Euro',
-    symbol: '€',
-    flag: '🇪🇺',
-    rate: 340,
-  },
-  MLC: {
-    code: 'MLC',
-    name: 'Moneda Libremente Convertible',
-    symbol: 'MLC',
-    flag: '🏦',
-    rate: 270,
-  },
-};
+// CONSTANTES DE MONEDA - ACTUALIZADAS DINÁMICAMENTE
+export const CURRENCIES = ${JSON.stringify(currenciesObject, null, 2)};
 
 export const DEFAULT_CURRENCY = 'CUP';
 `;
@@ -409,7 +402,7 @@ export const STORE_MESSAGES = ${JSON.stringify(messages, null, 2)};
       URL.revokeObjectURL(url);
       
       toastHandler(ToastType.Success, '🎉 Backup de Yero Shop exportado exitosamente');
-      toastHandler(ToastType.Info, 'Los archivos mantienen la estructura exacta con imágenes optimizadas');
+      toastHandler(ToastType.Info, 'Incluye Footer Links y Tasas de Monedas actualizadas');
       
     } catch (error) {
       console.error('Error al exportar backup:', error);
@@ -426,7 +419,9 @@ export const STORE_MESSAGES = ${JSON.stringify(messages, null, 2)};
       products: products?.length || 0,
       categories: categories?.length || 0,
       coupons: storeConfig.coupons?.length || 0,
-      zones: storeConfig.zones?.length || 0
+      zones: storeConfig.zones?.length || 0,
+      footerLinks: 0,
+      currencies: 0
     };
 
     if (savedConfig) {
@@ -436,7 +431,9 @@ export const STORE_MESSAGES = ${JSON.stringify(messages, null, 2)};
           products: parsedConfig.products?.length || stats.products,
           categories: parsedConfig.categories?.length || stats.categories,
           coupons: parsedConfig.coupons?.length || stats.coupons,
-          zones: parsedConfig.zones?.length || stats.zones
+          zones: parsedConfig.zones?.length || stats.zones,
+          footerLinks: parsedConfig.footerLinks?.length || 0,
+          currencies: parsedConfig.currencies ? Object.keys(parsedConfig.currencies).length : 0
         };
       } catch (error) {
         console.error('Error al cargar estadísticas:', error);
@@ -458,7 +455,7 @@ export const STORE_MESSAGES = ${JSON.stringify(messages, null, 2)};
           <div className={styles.infoItem}>
             <strong>📁 Archivos incluidos:</strong>
             <ul>
-              <li><code>constants.jsx</code> - Configuración de cupones, zonas, WhatsApp y monedas</li>
+              <li><code>constants.jsx</code> - Configuración completa: cupones, zonas, WhatsApp, monedas, footer links</li>
               <li><code>products.js</code> - Base de datos de productos con estructura exacta e imágenes responsivas</li>
               <li><code>categories.js</code> - Base de datos de categorías con estructura exacta e imágenes responsivas</li>
               <li><code>messages.js</code> - Todos los mensajes de la tienda</li>
@@ -478,7 +475,10 @@ export const STORE_MESSAGES = ${JSON.stringify(messages, null, 2)};
             <strong>🛡️ Seguridad:</strong> Mantiene la integridad del código fuente y permite restaurar fácilmente los cambios.
           </div>
           <div className={styles.infoItem}>
-            <strong>💱 Monedas:</strong> Incluye todas las constantes de moneda necesarias para el sistema de conversión.
+            <strong>💱 Monedas:</strong> Incluye todas las tasas de conversión personalizadas y configuración de monedas.
+          </div>
+          <div className={styles.infoItem}>
+            <strong>🔗 Footer Links:</strong> Incluye todos los enlaces del footer configurados dinámicamente.
           </div>
         </div>
       </div>
@@ -491,7 +491,7 @@ export const STORE_MESSAGES = ${JSON.stringify(messages, null, 2)};
           <div className={styles.cardContent}>
             <p>
               Exporta todos los cambios realizados en el panel de control a archivos de código fuente 
-              actualizados manteniendo la estructura exacta con imágenes optimizadas. Esto incluye productos, categorías, cupones, zonas, mensajes, configuraciones y sistema de monedas.
+              actualizados manteniendo la estructura exacta con imágenes optimizadas. Esto incluye productos, categorías, cupones, zonas, mensajes, footer links, tasas de monedas y configuraciones generales.
             </p>
             <div className={styles.changesSummary}>
               <h4>📊 Resumen de cambios a exportar:</h4>
@@ -501,7 +501,9 @@ export const STORE_MESSAGES = ${JSON.stringify(messages, null, 2)};
                 <li>📦 {stats.products} productos en catálogo (con imágenes 600x450px responsivas)</li>
                 <li>📂 {stats.categories} categorías disponibles (con imágenes 400x300px responsivas)</li>
                 <li>💬 {Object.keys(JSON.parse(localStorage.getItem('storeMessages') || '{}')).length} categorías de mensajes</li>
-                <li>💱 Sistema completo de monedas (CUP, USD, EUR, MLC)</li>
+                <li>🔗 {stats.footerLinks} enlaces del footer configurados</li>
+                <li>💱 {stats.currencies} monedas con tasas de conversión personalizadas</li>
+                <li>💱 Sistema completo de monedas dinámico</li>
               </ul>
             </div>
             <button 
@@ -528,7 +530,7 @@ export const STORE_MESSAGES = ${JSON.stringify(messages, null, 2)};
           <div className={styles.step}>
             <span className={styles.stepNumber}>1</span>
             <div className={styles.stepContent}>
-              <strong>Realizar cambios:</strong> Modifica productos, categorías, cupones, zonas o mensajes en las diferentes secciones del panel.
+              <strong>Realizar cambios:</strong> Modifica productos, categorías, cupones, zonas, mensajes, footer links o tasas de monedas en las diferentes secciones del panel.
             </div>
           </div>
           <div className={styles.step}>
