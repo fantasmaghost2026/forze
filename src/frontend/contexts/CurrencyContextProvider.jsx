@@ -9,74 +9,22 @@ export const useCurrencyContext = () => useContext(CurrencyContext);
 
 const CurrencyContextProvider = ({ children }) => {
   const [selectedCurrency, setSelectedCurrency] = useState(DEFAULT_CURRENCY);
-  const [currencies, setCurrencies] = useState(CURRENCIES);
 
   // Cargar moneda desde localStorage al iniciar
   useEffect(() => {
     const savedCurrency = localStorage.getItem(LOCAL_STORAGE_KEYS.Currency);
-    if (savedCurrency && currencies[savedCurrency]) {
+    if (savedCurrency && CURRENCIES[savedCurrency]) {
       setSelectedCurrency(savedCurrency);
     }
-  }, [currencies]);
-
-  // Cargar monedas personalizadas desde la configuración del admin
-  useEffect(() => {
-    const loadCurrencies = () => {
-      const savedConfig = localStorage.getItem('adminStoreConfig');
-      if (savedConfig) {
-        try {
-          const parsedConfig = JSON.parse(savedConfig);
-          if (parsedConfig.currencies) {
-            console.log('💱 Cargando monedas personalizadas desde configuración del admin');
-            setCurrencies(parsedConfig.currencies);
-          }
-        } catch (error) {
-          console.error('Error al cargar monedas personalizadas:', error);
-        }
-      }
-    };
-
-    loadCurrencies();
-
-    // Escuchar eventos de actualización de monedas
-    const handleCurrenciesUpdate = (event) => {
-      const { currencies: updatedCurrencies } = event.detail;
-      console.log('📡 Monedas actualizadas en tiempo real:', Object.keys(updatedCurrencies).length);
-      setCurrencies(updatedCurrencies);
-      
-      // Verificar si la moneda seleccionada aún existe
-      if (!updatedCurrencies[selectedCurrency]) {
-        setSelectedCurrency(DEFAULT_CURRENCY);
-        localStorage.setItem(LOCAL_STORAGE_KEYS.Currency, DEFAULT_CURRENCY);
-        toastHandler(ToastType.Info, 'Moneda cambiada a CUP (la moneda anterior fue eliminada)');
-      }
-    };
-
-    const handleConfigUpdate = () => {
-      console.log('📡 Configuración actualizada, recargando monedas...');
-      loadCurrencies();
-    };
-
-    // Agregar listeners
-    window.addEventListener('currenciesUpdated', handleCurrenciesUpdate);
-    window.addEventListener('forceStoreUpdate', handleConfigUpdate);
-    window.addEventListener('adminConfigChanged', handleConfigUpdate);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('currenciesUpdated', handleCurrenciesUpdate);
-      window.removeEventListener('forceStoreUpdate', handleConfigUpdate);
-      window.removeEventListener('adminConfigChanged', handleConfigUpdate);
-    };
-  }, [selectedCurrency]);
+  }, []);
 
   // Función para cambiar moneda
   const changeCurrency = (currencyCode) => {
-    if (currencies[currencyCode]) {
+    if (CURRENCIES[currencyCode]) {
       setSelectedCurrency(currencyCode);
       localStorage.setItem(LOCAL_STORAGE_KEYS.Currency, currencyCode);
       
-      const currency = currencies[currencyCode];
+      const currency = CURRENCIES[currencyCode];
       toastHandler(
         ToastType.Success, 
         `💱 Moneda cambiada a ${currency.flag} ${currency.name} (${currency.code})`
@@ -90,7 +38,7 @@ const CurrencyContextProvider = ({ children }) => {
       return cupAmount;
     }
     
-    const rate = currencies[selectedCurrency]?.rate || 1;
+    const rate = CURRENCIES[selectedCurrency].rate;
     return cupAmount / rate;
   };
 
@@ -100,18 +48,14 @@ const CurrencyContextProvider = ({ children }) => {
       return amount;
     }
     
-    const rate = currencies[fromCurrency]?.rate || 1;
+    const rate = CURRENCIES[fromCurrency].rate;
     return amount * rate;
   };
 
   // Función para formatear precio SIN duplicar código de moneda
   const formatPrice = (cupAmount, showCurrency = true) => {
     const convertedAmount = convertFromCUP(cupAmount);
-    const currency = currencies[selectedCurrency];
-    
-    if (!currency) {
-      return cupAmount.toLocaleString();
-    }
+    const currency = CURRENCIES[selectedCurrency];
     
     // Formatear según la moneda
     let formattedAmount;
@@ -146,22 +90,22 @@ const CurrencyContextProvider = ({ children }) => {
 
   // Función para obtener información de la moneda actual
   const getCurrentCurrency = () => {
-    return currencies[selectedCurrency] || currencies[DEFAULT_CURRENCY];
+    return CURRENCIES[selectedCurrency];
   };
 
   // Función para obtener todas las monedas disponibles
   const getAvailableCurrencies = () => {
-    return Object.values(currencies);
+    return Object.values(CURRENCIES);
   };
 
   // Función para obtener el símbolo de la moneda actual
   const getCurrencySymbol = () => {
-    return currencies[selectedCurrency]?.symbol || '$';
+    return CURRENCIES[selectedCurrency].symbol;
   };
 
   // Función para obtener la tasa de conversión actual
   const getCurrentRate = () => {
-    return currencies[selectedCurrency]?.rate || 1;
+    return CURRENCIES[selectedCurrency].rate;
   };
 
   return (
@@ -176,7 +120,6 @@ const CurrencyContextProvider = ({ children }) => {
       getAvailableCurrencies,
       getCurrencySymbol,
       getCurrentRate,
-      currencies,
     }}>
       {children}
     </CurrencyContext.Provider>
