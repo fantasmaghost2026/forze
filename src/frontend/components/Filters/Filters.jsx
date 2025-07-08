@@ -1,10 +1,5 @@
 import { FaStar } from 'react-icons/fa';
-import { 
-  giveUniqueLabelFOR, 
-  toastHandler, 
-  formatLargeNumber, 
-  calculateOptimalMidValue 
-} from '../../utils/utils';
+import { giveUniqueLabelFOR, midValue, toastHandler } from '../../utils/utils';
 import styles from './Filters.module.css';
 
 import { useFiltersContext } from '../../contexts/FiltersContextProvider';
@@ -15,8 +10,10 @@ import {
   SORT_TYPE,
   ToastType,
   RATINGS,
+  MIN_DISTANCE_BETWEEN_THUMBS,
 } from '../../constants/constants';
 import { Slider } from '@mui/material';
+import { useCurrencyContext } from '../../contexts/CurrencyContextProvider';
 
 const Filters = ({
   isFilterContainerVisible,
@@ -34,6 +31,7 @@ const Filters = ({
   } = useFiltersContext();
 
   const { products: productsFromProductContext } = useAllProductsContext();
+  const { formatPrice } = useCurrencyContext();
 
   const {
     category: categoryFromContext,
@@ -43,11 +41,21 @@ const Filters = ({
     sortByOption: sortByOptionFromContext,
   } = filters;
 
+  // FILTRAR SOLO CATEGORÍAS HABILITADAS
   const categoriesList = [
-    ...new Set(productsFromProductContext.map((product) => product.category)),
+    ...new Set(
+      productsFromProductContext
+        .map((product) => product.category)
+        .filter(Boolean)
+    ),
   ];
+
   const companiesList = [
-    ...new Set(productsFromProductContext.map((product) => product.company)),
+    ...new Set(
+      productsFromProductContext
+        .map((product) => product.company)
+        .filter(Boolean)
+    ),
   ];
 
   const handleClearFilter = () => {
@@ -55,19 +63,41 @@ const Filters = ({
     toastHandler(ToastType.Success, 'Filtros limpiados exitosamente');
   };
 
-  // Calcular el paso óptimo para el slider basado en el rango
-  const calculateOptimalStep = (min, max) => {
-    const range = max - min;
-    
-    if (range <= 1000) return 10;      // Pasos de 10 para rangos pequeños
-    if (range <= 10000) return 100;    // Pasos de 100 para rangos medianos
-    if (range <= 100000) return 1000;  // Pasos de 1000 para rangos grandes
-    if (range <= 1000000) return 5000; // Pasos de 5000 para rangos muy grandes
-    return 10000;                       // Pasos de 10000 para rangos enormes
+  // FUNCIÓN MEJORADA PARA MANEJAR EL SLIDER DE PRECIOS
+  const handlePriceSliderChange = (event, newValue, activeThumb) => {
+    if (!Array.isArray(newValue)) {
+      return;
+    }
+
+    let adjustedValue = [...newValue];
+
+    // Asegurar distancia mínima entre los valores
+    if (activeThumb === 0) {
+      adjustedValue[0] = Math.min(
+        newValue[0],
+        adjustedValue[1] - MIN_DISTANCE_BETWEEN_THUMBS
+      );
+    } else {
+      adjustedValue[1] = Math.max(
+        newValue[1],
+        adjustedValue[0] + MIN_DISTANCE_BETWEEN_THUMBS
+      );
+    }
+
+    // Asegurar que los valores estén dentro del rango válido
+    adjustedValue[0] = Math.max(minPriceFromContext, adjustedValue[0]);
+    adjustedValue[1] = Math.min(maxPriceFromContext, adjustedValue[1]);
+
+    updatePriceFilter(
+      { target: { name: FILTER_INPUT_TYPE.PRICE } },
+      adjustedValue,
+      activeThumb
+    );
   };
 
-  const optimalStep = calculateOptimalStep(minPriceFromContext, maxPriceFromContext);
-  const midValue = calculateOptimalMidValue(minPriceFromContext, maxPriceFromContext);
+  // CALCULAR VALORES PARA EL SLIDER
+  const priceStep = Math.max(1, Math.floor((maxPriceFromContext - minPriceFromContext) / 100));
+  const midPriceValue = midValue(minPriceFromContext, maxPriceFromContext);
 
   return (
     <form
@@ -90,72 +120,88 @@ const Filters = ({
       </header>
 
       <fieldset>
-        <legend>Rango de Precio</legend>
-
-        <div className={styles.priceRangeInfo}>
-          <small>
-            Rango: ${formatLargeNumber(minPriceFromContext)} - ${formatLargeNumber(maxPriceFromContext)} CUP
-          </small>
+        <legend>💰 Rango de Precio</legend>
+        
+        <div className={styles.priceInfo}>
+          <p>
+            <strong>Rango actual:</strong> {formatPrice(priceFromContext[0])} - {formatPrice(priceFromContext[1])}
+          </p>
+          <p>
+            <strong>Productos disponibles:</strong> {formatPrice(minPriceFromContext)} - {formatPrice(maxPriceFromContext)}
+          </p>
         </div>
 
         <Slider
           name={FILTER_INPUT_TYPE.PRICE}
-          getAriaLabel={() => 'Distancia mínima'}
+          getAriaLabel={() => 'Rango de precios'}
+          value={priceFromContext}
+          onChange={handlePriceSliderChange}
           valueLabelDisplay='auto'
+          valueLabelFormat={(value) => formatPrice(value)}
           min={minPriceFromContext}
           max={maxPriceFromContext}
-          value={priceFromContext}
-          onChange={updatePriceFilter}
-          step={optimalStep}
+          step={priceStep}
           disableSwap
           style={{
             color: 'var(--primary-500)',
-            width: '80%',
-            margin: 'auto -1rem auto 1rem',
+            width: '85%',
+            margin: '1rem auto',
           }}
+          marks={[
+            {
+              value: minPriceFromContext,
+              label: formatPrice(minPriceFromContext),
+            },
+            {
+              value: midPriceValue,
+              label: formatPrice(midPriceValue),
+            },
+            {
+              value: maxPriceFromContext,
+              label: formatPrice(maxPriceFromContext),
+            },
+          ]}
         />
 
         <div className={styles.flexSpaceBtwn}>
-          <span>${formatLargeNumber(minPriceFromContext)}</span>
-          <span>${formatLargeNumber(midValue)}</span>
-          <span>${formatLargeNumber(maxPriceFromContext)}</span>
-        </div>
-
-        <div className={styles.selectedRange}>
-          <small>
-            Seleccionado: ${formatLargeNumber(priceFromContext[0])} - ${formatLargeNumber(priceFromContext[1])} CUP
-          </small>
+          <span>{formatPrice(minPriceFromContext)}</span>
+          <span>{formatPrice(midPriceValue)}</span>
+          <span>{formatPrice(maxPriceFromContext)}</span>
         </div>
       </fieldset>
 
       <fieldset>
-        <legend>Categoría</legend>
+        <legend>📂 Categoría</legend>
 
-        {categoriesList.map((singleCategory, index) => (
-          <div key={index}>
-            <input
-              type='checkbox'
-              name={FILTER_INPUT_TYPE.CATEGORY}
-              id={giveUniqueLabelFOR(singleCategory, index)}
-              checked={categoryFromContext[singleCategory] || false}
-              onChange={() => updateCategoryFilter(singleCategory)}
-            />{' '}
-            <label htmlFor={giveUniqueLabelFOR(singleCategory, index)}>
-              {singleCategory}
-            </label>
-          </div>
-        ))}
+        {categoriesList.length === 0 ? (
+          <p className={styles.noOptions}>No hay categorías disponibles</p>
+        ) : (
+          categoriesList.map((singleCategory, index) => (
+            <div key={index}>
+              <input
+                type='checkbox'
+                name={FILTER_INPUT_TYPE.CATEGORY}
+                id={giveUniqueLabelFOR(singleCategory, index)}
+                checked={categoryFromContext[singleCategory] || false}
+                onChange={() => updateCategoryFilter(singleCategory)}
+              />{' '}
+              <label htmlFor={giveUniqueLabelFOR(singleCategory, index)}>
+                {singleCategory}
+              </label>
+            </div>
+          ))
+        )}
       </fieldset>
 
       <fieldset>
-        <legend>Marca</legend>
+        <legend>🏢 Marca</legend>
 
         <select
           name={FILTER_INPUT_TYPE.COMPANY}
           onChange={updateFilters}
           value={companyFromContext}
         >
-          <option value='all'>Todas</option>
+          <option value='all'>Todas las marcas</option>
           {companiesList.map((company, index) => (
             <option key={giveUniqueLabelFOR(company, index)} value={company}>
               {company}
@@ -165,7 +211,7 @@ const Filters = ({
       </fieldset>
 
       <fieldset className={styles.ratingFieldset}>
-        <legend>Calificación</legend>
+        <legend>⭐ Calificación</legend>
 
         {RATINGS.map((singleRating, index) => (
           <div key={singleRating}>
@@ -185,7 +231,7 @@ const Filters = ({
       </fieldset>
 
       <fieldset>
-        <legend>Ordenar Por</legend>
+        <legend>🔄 Ordenar Por</legend>
 
         {Object.values(SORT_TYPE).map((singleSortValue, index) => (
           <div key={singleSortValue}>

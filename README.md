@@ -1,34 +1,25 @@
 <div align="center">
-  <img src="https://res.cloudinary.com/dtbd1y4en/image/upload/v1686085866/jethalalBanner_mwo4ml.png" height="300" width="300" alt="logo"/>
+  <img src="https://f005.backblazeb2.com/file/120000/Yero+Shop/jethalalBanner.png" height="300" width="300" alt="logo"/>
 
-# The Gada Electronics
+# Yero Shop!
 
-## Naam hi kaafi hai (Name is enough)
+## La plataforma de comercio detrás de todo
 
-### An Ecommerce website for electronics
+### An Ecommerce website 
 
   <hr />
 
 </div>
 
-## **How to install and run locally ?**
+## **Enlace en vivo :**
 
-```
-$ git clone https://github.com/swastikpatro/gada-electronics-ecommerce.git
-$ cd gada-electronics-ecommerce/
-$ npm install
-$ npm start
-```
-
-## **Live Link :**
-
-[The Gada Electronics](https://gada-electronics-ecommerce.vercel.app/)
+[Yero Shop!](https://yero-shop.vercel.app/)
 
 ## **DEMO**
 
-<a href="https://www.awesomescreenshot.com/video/20639625">
-    <p>Gadda Electronics App 📱 - Watch Video</p>
-    <img style="max-width:300px;" src="https://cdn.loom.com/sessions/thumbnails/322cc01c9fed4c06ba42541fb8675ad0-1686135559450-with-play.gif">
+<a href="https://yero-shop.vercel.app/>
+    <p>Yero Shop! App 📱 - Watch Video</p>
+    <img style="max-width:300px;" src="">
   </a>
 
 ## **Features -**
@@ -69,34 +60,34 @@ $ npm start
 ## **Screenshots :**
 
 ### Error Page
-![image](https://github.com/swastikpatro/gada-electronics-ecommerce/assets/113245457/0fd0c9a1-574a-4aef-bfe7-b59bc8ca0536)
+![image]()
 
 ### Home Page
-![Gada Electronics-home](https://github.com/swastikpatro/gada-electronics-ecommerce/assets/113245457/b7ba9291-4afa-4629-a576-bcac41900cf4)
+![Yero Shop!-home](https://f005.backblazeb2.com/file/120000/Yero+Shop/Yero+Shop!-home.png)
 
 ### Product Listing Page (DESKTOP)
-![image](https://github.com/swastikpatro/gada-electronics-ecommerce/assets/113245457/c7423acb-db46-498b-85f3-e5d3e5d1a725)
+![image](https://f005.backblazeb2.com/file/120000/Yero+Shop/Product+Listing+Page+(DESKTOP).png)
 
 ### Product Listing Page (MOBILE)
-![image](https://github.com/swastikpatro/gada-electronics-ecommerce/assets/113245457/ce97605a-c25b-47ae-8df2-9961168e8318)
+![image](https://f005.backblazeb2.com/file/120000/Yero+Shop/MOBILE.png)
 
 ### Cart Page
-![image](https://github.com/swastikpatro/gada-electronics-ecommerce/assets/113245457/3d6c755c-808f-457a-92b2-cb2f4aa9b939)
+![image](https://f005.backblazeb2.com/file/120000/Yero+Shop/Cart_Page.png)
 
 ### Wishlist Page
-![image](https://github.com/swastikpatro/gada-electronics-ecommerce/assets/113245457/46f21440-c25d-498b-bc03-f906e0f26859)
+![image](https://f005.backblazeb2.com/file/120000/Yero+Shop/Wishlist+Page.png)
 
 ### Profile Page
-![image](https://github.com/swastikpatro/gada-electronics-ecommerce/assets/113245457/db3dee7c-9313-4328-abde-f84f68e1f78e)
+![image](https://f005.backblazeb2.com/file/120000/Yero+Shop/Profile+Page.png)
 
 ### Address Page
-![image](https://github.com/swastikpatro/gada-electronics-ecommerce/assets/113245457/38c423cd-760f-47c5-b16b-d1831ffd63ff)
+![image](https://f005.backblazeb2.com/file/120000/Yero+Shop/Address+Page.png)
 
 ### Checkout Page
-![image](https://github.com/swastikpatro/gada-electronics-ecommerce/assets/113245457/fa192bcc-1dbd-47ee-aa82-0f708bb6d0d5)
+![image](https://f005.backblazeb2.com/file/120000/Yero+Shop/Checkout+Page.png)
 
 ### Login Page
-![image](https://github.com/swastikpatro/gada-electronics-ecommerce/assets/113245457/e61ec27f-0f7e-4da3-aa3e-3d09f10b0d5a)
+![image](https://f005.backblazeb2.com/file/120000/Yero+Shop/Login+Page.png)
 
 ### Signup Page
-![image](https://github.com/swastikpatro/gada-electronics-ecommerce/assets/113245457/b10f3147-4cad-4feb-8e61-5245f4662c07)
+![image](https://f005.backblazeb2.com/file/120000/Yero+Shop/Signup+Page.png)

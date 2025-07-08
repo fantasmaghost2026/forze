@@ -6,7 +6,7 @@ import { filtersReducer } from '../reducers';
 import { initialFiltersState } from '../reducers/filtersReducer';
 import {
   FILTER_INPUT_TYPE,
-  calculateMinDistanceBetweenThumbs,
+  MIN_DISTANCE_BETWEEN_THUMBS,
 } from '../constants/constants';
 
 const FiltersContext = createContext(null);
@@ -43,23 +43,17 @@ const FiltersContextProvider = ({ children }) => {
   const updatePriceFilter = (e, newValue, activeThumb) => {
     const { name } = e.target;
 
-    // Calcular la distancia mínima dinámicamente
-    const minDistance = calculateMinDistanceBetweenThumbs(
-      minPriceFromContext, 
-      maxPriceFromContext
-    );
-
     let value;
 
     value =
       activeThumb === 0
         ? [
-            Math.min(newValue[0], newValue[1] - minDistance),
+            Math.min(newValue[0], newValue[1] - MIN_DISTANCE_BETWEEN_THUMBS),
             newValue[1],
           ]
         : [
             newValue[0],
-            Math.max(newValue[1], newValue[0] + minDistance),
+            Math.max(newValue[1], newValue[0] + MIN_DISTANCE_BETWEEN_THUMBS),
           ];
 
     dispatch({
