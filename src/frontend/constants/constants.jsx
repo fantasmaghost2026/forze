@@ -246,7 +246,18 @@ export const CHARGE_AND_DISCOUNT = {
   discount: 0,
 };
 
-export const MIN_DISTANCE_BETWEEN_THUMBS = 1000;
+// Función dinámica para calcular la distancia mínima entre thumbs
+export const calculateMinDistanceBetweenThumbs = (min, max) => {
+  const range = max - min;
+  
+  if (range <= 1000) return 50;      // Para rangos pequeños
+  if (range <= 10000) return 500;    // Para rangos medianos
+  if (range <= 100000) return 2000;  // Para rangos grandes
+  if (range <= 1000000) return 10000; // Para rangos muy grandes
+  return 25000;                       // Para rangos enormes
+};
+
+export const MIN_DISTANCE_BETWEEN_THUMBS = 1000; // Valor por defecto
 export const MAX_RESPONSES_IN_CACHE_TO_STORE = 50;
 
 // WhatsApp de la tienda - ACTUALIZADO

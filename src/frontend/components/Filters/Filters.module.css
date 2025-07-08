@@ -88,6 +88,36 @@ option {
   justify-content: space-between;
   margin-top: 0;
   color: var(--grey-500);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.priceRangeInfo {
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.priceRangeInfo small {
+  color: var(--primary-600);
+  font-weight: 600;
+  background: var(--primary-50);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--borderRadius);
+  border: 1px solid var(--primary-200);
+}
+
+.selectedRange {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.selectedRange small {
+  color: var(--green-dark);
+  font-weight: 600;
+  background: var(--green-light);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--borderRadius);
+  border: 1px solid var(--green-medium);
 }
 
 @media screen and (min-width: 768px) {

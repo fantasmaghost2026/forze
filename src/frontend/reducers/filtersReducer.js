@@ -4,6 +4,7 @@ import {
   convertArrayToObjectWithPropertyFALSE,
   givePaginatedList,
   lowerizeAndCheckIncludes,
+  calculateOptimalPriceRange,
 } from '../utils/utils';
 
 export const initialFiltersState = {
@@ -42,16 +43,23 @@ export const filtersReducer = (state, action) => {
 
       const filteredProducts = givePaginatedList(allProductsCloned);
 
-      const allCategoryNames = action.payload?.categories.map(
-        ({ categoryName }) => categoryName
-      );
+      const allCategoryNames = action.payload?.categories
+        .filter(category => !category.disabled) // Solo categorías habilitadas
+        .map(({ categoryName }) => categoryName);
 
       let minPrice = 0,
         maxPrice = 0;
 
       if (allProductsCloned.length > 1) {
-        maxPrice = Math.max(...allPrices);
-        minPrice = Math.min(...allPrices);
+        // Usar la nueva función para calcular el rango óptimo
+        const priceRange = calculateOptimalPriceRange(allPrices);
+        minPrice = priceRange.min;
+        maxPrice = priceRange.max;
+      } else if (allProductsCloned.length === 1) {
+        // Si solo hay un producto, crear un rango mínimo alrededor de su precio
+        const singlePrice = allPrices[0];
+        minPrice = Math.max(0, singlePrice - (singlePrice * 0.1)); // 10% menos
+        maxPrice = singlePrice + (singlePrice * 0.1); // 10% más
       }
 
       return {

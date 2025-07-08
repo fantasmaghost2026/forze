@@ -1,5 +1,10 @@
 import { FaStar } from 'react-icons/fa';
-import { giveUniqueLabelFOR, midValue, toastHandler } from '../../utils/utils';
+import { 
+  giveUniqueLabelFOR, 
+  toastHandler, 
+  formatLargeNumber, 
+  calculateOptimalMidValue 
+} from '../../utils/utils';
 import styles from './Filters.module.css';
 
 import { useFiltersContext } from '../../contexts/FiltersContextProvider';
@@ -50,6 +55,20 @@ const Filters = ({
     toastHandler(ToastType.Success, 'Filtros limpiados exitosamente');
   };
 
+  // Calcular el paso óptimo para el slider basado en el rango
+  const calculateOptimalStep = (min, max) => {
+    const range = max - min;
+    
+    if (range <= 1000) return 10;      // Pasos de 10 para rangos pequeños
+    if (range <= 10000) return 100;    // Pasos de 100 para rangos medianos
+    if (range <= 100000) return 1000;  // Pasos de 1000 para rangos grandes
+    if (range <= 1000000) return 5000; // Pasos de 5000 para rangos muy grandes
+    return 10000;                       // Pasos de 10000 para rangos enormes
+  };
+
+  const optimalStep = calculateOptimalStep(minPriceFromContext, maxPriceFromContext);
+  const midValue = calculateOptimalMidValue(minPriceFromContext, maxPriceFromContext);
+
   return (
     <form
       className={`${styles.filtersContainer} ${
@@ -73,6 +92,12 @@ const Filters = ({
       <fieldset>
         <legend>Rango de Precio</legend>
 
+        <div className={styles.priceRangeInfo}>
+          <small>
+            Rango: ${formatLargeNumber(minPriceFromContext)} - ${formatLargeNumber(maxPriceFromContext)} CUP
+          </small>
+        </div>
+
         <Slider
           name={FILTER_INPUT_TYPE.PRICE}
           getAriaLabel={() => 'Distancia mínima'}
@@ -81,7 +106,7 @@ const Filters = ({
           max={maxPriceFromContext}
           value={priceFromContext}
           onChange={updatePriceFilter}
-          step={1000}
+          step={optimalStep}
           disableSwap
           style={{
             color: 'var(--primary-500)',
@@ -91,9 +116,15 @@ const Filters = ({
         />
 
         <div className={styles.flexSpaceBtwn}>
-          <span>{minPriceFromContext}</span>
-          <span>{midValue(minPriceFromContext, maxPriceFromContext)}</span>
-          <span>{maxPriceFromContext}</span>
+          <span>${formatLargeNumber(minPriceFromContext)}</span>
+          <span>${formatLargeNumber(midValue)}</span>
+          <span>${formatLargeNumber(maxPriceFromContext)}</span>
+        </div>
+
+        <div className={styles.selectedRange}>
+          <small>
+            Seleccionado: ${formatLargeNumber(priceFromContext[0])} - ${formatLargeNumber(priceFromContext[1])} CUP
+          </small>
         </div>
       </fieldset>
 

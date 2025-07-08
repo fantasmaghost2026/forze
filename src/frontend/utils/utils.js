@@ -145,3 +145,89 @@ export const generateOrderNumber = () => {
   const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
   return `ORD${timestamp}${random}`;
 };
+
+// Función para calcular el rango óptimo de precios
+export const calculateOptimalPriceRange = (prices) => {
+  if (!prices || prices.length === 0) {
+    return { min: 0, max: 100000 };
+  }
+
+  if (prices.length === 1) {
+    const singlePrice = prices[0];
+    return {
+      min: Math.max(0, Math.floor(singlePrice * 0.9)),
+      max: Math.ceil(singlePrice * 1.1)
+    };
+  }
+
+  const sortedPrices = [...prices].sort((a, b) => a - b);
+  const minPrice = sortedPrices[0];
+  const maxPrice = sortedPrices[sortedPrices.length - 1];
+  
+  // Calcular el rango de precios
+  const priceRange = maxPrice - minPrice;
+  
+  // Si el rango es muy pequeño (productos con precios similares)
+  if (priceRange < 1000) {
+    return {
+      min: Math.max(0, Math.floor(minPrice * 0.95)), // 5% menos del mínimo
+      max: Math.ceil(maxPrice * 1.05) // 5% más del máximo
+    };
+  }
+  
+  // Si el rango es moderado (hasta 100,000)
+  if (priceRange <= 100000) {
+    const padding = priceRange * 0.1; // 10% de padding
+    return {
+      min: Math.max(0, Math.floor(minPrice - padding)),
+      max: Math.ceil(maxPrice + padding)
+    };
+  }
+  
+  // Para rangos grandes (más de 100,000)
+  if (priceRange <= 1000000) {
+    const padding = priceRange * 0.05; // 5% de padding
+    return {
+      min: Math.max(0, Math.floor(minPrice - padding)),
+      max: Math.ceil(maxPrice + padding)
+    };
+  }
+  
+  // Para rangos muy grandes (más de 1,000,000)
+  const padding = Math.min(priceRange * 0.02, 50000); // Máximo 50,000 de padding
+  return {
+    min: Math.max(0, Math.floor(minPrice - padding)),
+    max: Math.ceil(maxPrice + padding)
+  };
+};
+
+// Función para formatear números grandes de manera legible
+export const formatLargeNumber = (number) => {
+  if (number >= 1000000) {
+    return (number / 1000000).toFixed(1) + 'M';
+  }
+  if (number >= 1000) {
+    return (number / 1000).toFixed(0) + 'K';
+  }
+  return number.toString();
+};
+
+// Función para calcular el valor medio óptimo para el slider
+export const calculateOptimalMidValue = (min, max) => {
+  const range = max - min;
+  
+  // Para rangos pequeños, usar el punto medio exacto
+  if (range <= 10000) {
+    return Math.floor((min + max) / 2);
+  }
+  
+  // Para rangos medianos, redondear a miles
+  if (range <= 100000) {
+    const mid = (min + max) / 2;
+    return Math.round(mid / 1000) * 1000;
+  }
+  
+  // Para rangos grandes, redondear a decenas de miles
+  const mid = (min + max) / 2;
+  return Math.round(mid / 10000) * 10000;
+};
