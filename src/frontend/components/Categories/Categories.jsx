@@ -24,7 +24,7 @@ const Categories = () => {
 
   return (
     <section className='section'>
-      <Title variant="categories">Categorías</Title>
+      <Title>Categorías</Title>
 
       <div className={`container ${styles.categoryContainer}`}>
         {enabledCategories.map(({ _id, categoryName, categoryImage }) => (
