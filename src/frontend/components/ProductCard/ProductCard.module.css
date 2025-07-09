@@ -20,82 +20,46 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, 
-    rgba(220, 38, 38, 0.95) 0%, 
-    rgba(185, 28, 28, 0.95) 50%, 
-    rgba(153, 27, 27, 0.95) 100%);
+  background: var(--overlay-bcg);
   z-index: 2;
   cursor: not-allowed;
-  color: var(--white);
   letter-spacing: var(--letterSpacing);
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   display: grid;
   place-items: center;
   border-radius: var(--borderRadius);
-  font-weight: 800;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(2px);
-  animation: outOfStockPulse 2s ease-in-out infinite;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 
-    inset 0 0 20px rgba(255, 255, 255, 0.2),
-    0 0 20px rgba(220, 38, 38, 0.6),
-    0 0 40px rgba(220, 38, 38, 0.4);
+  font-weight: 600;
+  
+  /* Efecto moderno solo en la palabra AGOTADO */
+  color: #ff4444;
+  text-shadow: 
+    0 0 5px rgba(255, 68, 68, 0.8),
+    0 0 10px rgba(255, 68, 68, 0.6),
+    0 0 15px rgba(255, 68, 68, 0.4),
+    2px 2px 4px rgba(0, 0, 0, 0.8);
+  animation: agotadoGlow 2s ease-in-out infinite alternate;
+  font-family: var(--headingFont);
+  text-transform: uppercase;
 }
 
-/* Animación moderna para "AGOTADO" */
-@keyframes outOfStockPulse {
+/* Animación de brillo para la palabra AGOTADO */
+@keyframes agotadoGlow {
   0% {
-    transform: scale(1);
-    opacity: 0.95;
-    box-shadow: 
-      inset 0 0 20px rgba(255, 255, 255, 0.2),
-      0 0 20px rgba(220, 38, 38, 0.6),
-      0 0 40px rgba(220, 38, 38, 0.4);
-  }
-  50% {
-    transform: scale(1.02);
-    opacity: 1;
-    box-shadow: 
-      inset 0 0 30px rgba(255, 255, 255, 0.3),
-      0 0 30px rgba(220, 38, 38, 0.8),
-      0 0 60px rgba(220, 38, 38, 0.6);
+    text-shadow: 
+      0 0 5px rgba(255, 68, 68, 0.8),
+      0 0 10px rgba(255, 68, 68, 0.6),
+      0 0 15px rgba(255, 68, 68, 0.4),
+      2px 2px 4px rgba(0, 0, 0, 0.8);
+    color: #ff4444;
   }
   100% {
-    transform: scale(1);
-    opacity: 0.95;
-    box-shadow: 
-      inset 0 0 20px rgba(255, 255, 255, 0.2),
-      0 0 20px rgba(220, 38, 38, 0.6),
-      0 0 40px rgba(220, 38, 38, 0.4);
-  }
-}
-
-/* Efecto adicional de parpadeo sutil */
-.disabledProduct::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.4), 
-    transparent);
-  animation: outOfStockShine 3s ease-in-out infinite;
-  z-index: 3;
-}
-
-@keyframes outOfStockShine {
-  0% {
-    left: -100%;
-  }
-  50% {
-    left: 100%;
-  }
-  100% {
-    left: 100%;
+    text-shadow: 
+      0 0 10px rgba(255, 68, 68, 1),
+      0 0 20px rgba(255, 68, 68, 0.8),
+      0 0 30px rgba(255, 68, 68, 0.6),
+      0 0 40px rgba(255, 68, 68, 0.4),
+      2px 2px 4px rgba(0, 0, 0, 0.8);
+    color: #ff6666;
   }
 }
 
@@ -320,8 +284,7 @@
   }
 
   .disabledProduct::before {
-    font-size: 1.8rem;
-    letter-spacing: 2px;
+    font-size: 1.5rem;
   }
 
   /* skeleton card css */
