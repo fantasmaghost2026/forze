@@ -5,17 +5,17 @@ export const FOOTER_LINKS = [
   {
     id: 1,
     icon: <AiOutlineTwitter />,
-    url: 'https://twitter.com/Swastik2001',
+    url: 'https://x.com/yero_shop',
   },
   {
     id: 2,
     icon: <AiFillLinkedin />,
-    url: 'https://www.linkedin.com/in/swastik-patro-2a54bb19b/',
+    url: 'https://www.linkedin.com/in/yero-shop-com-a47599373',
   },
   {
     id: 3,
     icon: <AiFillGithub />,
-    url: 'https://github.com/swastikpatro',
+    url: 'https://yeroportal.vercel.app/',
   },
 ];
 
@@ -257,7 +257,7 @@ export const DEFAULT_STORE_CONFIG = {
   "storeName": "Yero Shop!",
   "whatsappNumber": "+53 54690878",
   "storeAddress": "Santiago de Cuba, Cuba",
-  "lastModified": "2025-07-08T21:54:30.852Z",
+  "lastModified": "2025-07-10T03:02:21.045Z",
   "version": "1.0.0"
 };
 
