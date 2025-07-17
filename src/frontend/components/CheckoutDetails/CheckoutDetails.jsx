@@ -30,7 +30,6 @@ const CheckoutDetails = ({
 
   const { storeConfig } = useConfigContext();
   const { formatPriceWithCode, getCurrentCurrency, convertFromCUP } = useCurrencyContext();
-  const STORE_WHATSAPP = storeConfig.storeInfo?.whatsappNumber || '+53 54690878';
   const SANTIAGO_ZONES = storeConfig.zones || [];
 
   const {
@@ -89,33 +88,64 @@ const CheckoutDetails = ({
   // FUNCIÓN MEJORADA PARA DETECTAR DISPOSITIVOS Y SISTEMAS OPERATIVOS
   const detectDevice = () => {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const platform = navigator.platform || '';
     
     // Detectar iOS (iPhone, iPad, iPod)
     const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
     
     // Detectar macOS
-    const isMacOS = /Macintosh|MacIntel|MacPPC|Mac68K/.test(userAgent);
+    const isMacOS = /Macintosh|MacIntel|MacPPC|Mac68K/.test(userAgent) || /Mac/.test(platform);
     
     // Detectar Android
     const isAndroid = /Android/.test(userAgent);
     
     // Detectar Windows
-    const isWindows = /Windows/.test(userAgent);
+    const isWindows = /Windows/.test(userAgent) || /Win/.test(platform);
+    
+    // Detectar Linux
+    const isLinux = /Linux/.test(userAgent) && !isAndroid;
     
     // Detectar si es móvil en general
-    const isMobile = /Mobi|Android/i.test(userAgent) || isIOS;
+    const isMobile = /Mobi|Android/i.test(userAgent) || isIOS || 
+                    (window.innerWidth <= 768 && ('ontouchstart' in window || navigator.maxTouchPoints > 0));
     
-    // Detectar si tiene WhatsApp instalado (aproximación)
-    const hasWhatsApp = isMobile;
+    // Detectar si es tablet
+    const isTablet = (/iPad/.test(userAgent)) || 
+                    (isAndroid && !/Mobile/.test(userAgent)) ||
+                    (window.innerWidth >= 768 && window.innerWidth <= 1024 && ('ontouchstart' in window || navigator.maxTouchPoints > 0));
+    
+    // Detectar navegador específico
+    let browser = 'unknown';
+    if (/Chrome/.test(userAgent) && !/Edge|Edg/.test(userAgent)) {
+      browser = 'chrome';
+    } else if (/Safari/.test(userAgent) && !/Chrome/.test(userAgent)) {
+      browser = 'safari';
+    } else if (/Firefox/.test(userAgent)) {
+      browser = 'firefox';
+    } else if (/Edge|Edg/.test(userAgent)) {
+      browser = 'edge';
+    } else if (/Opera|OPR/.test(userAgent)) {
+      browser = 'opera';
+    }
+    
+    // Detectar capacidades del dispositivo
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isDesktop = !isMobile && !isTablet;
     
     return {
       isIOS,
       isMacOS,
       isAndroid,
       isWindows,
+      isLinux,
       isMobile,
-      hasWhatsApp,
-      isAppleDevice: isIOS || isMacOS
+      isTablet,
+      isDesktop,
+      browser,
+      hasTouch,
+      isAppleDevice: isIOS || isMacOS,
+      userAgent,
+      platform
     };
   };
 
@@ -128,125 +158,178 @@ const CheckoutDetails = ({
     console.log('🔍 Dispositivo detectado:', device);
     console.log('📱 Número limpio:', cleanPhone);
     
-    // Para dispositivos iOS (iPhone, iPad)
-    if (device.isIOS) {
-      // Intentar múltiples métodos para iOS
-      const iosUrls = [
-        `whatsapp://send?phone=${cleanPhone}&text=${encodedMessage}`,
-        `https://wa.me/${cleanPhone}?text=${encodedMessage}`,
-        `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`
-      ];
-      
-      console.log('📱 URLs para iOS generadas:', iosUrls);
-      return iosUrls;
+    // URLs universales que funcionan en todos los dispositivos y navegadores
+    const universalUrls = [];
+    
+    // 1. URL principal wa.me (funciona en todos los dispositivos y navegadores)
+    universalUrls.push(`https://wa.me/${cleanPhone}?text=${encodedMessage}`);
+    
+    // 2. Para dispositivos móviles y tablets: intentar app nativa primero
+    if (device.isMobile || device.isTablet) {
+      universalUrls.unshift(`whatsapp://send?phone=${cleanPhone}&text=${encodedMessage}`);
     }
     
-    // Para macOS (Safari, Chrome en Mac)
-    if (device.isMacOS) {
-      const macUrls = [
-        `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`,
-        `https://wa.me/${cleanPhone}?text=${encodedMessage}`,
-        `whatsapp://send?phone=${cleanPhone}&text=${encodedMessage}`
-      ];
-      
-      console.log('💻 URLs para macOS generadas:', macUrls);
-      return macUrls;
+    // 3. Para escritorio: WhatsApp Web como alternativa
+    if (device.isDesktop) {
+      universalUrls.push(`https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`);
     }
     
-    // Para Android
-    if (device.isAndroid) {
-      const androidUrls = [
-        `https://wa.me/${cleanPhone}?text=${encodedMessage}`,
-        `whatsapp://send?phone=${cleanPhone}&text=${encodedMessage}`,
-        `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`
-      ];
-      
-      console.log('🤖 URLs para Android generadas:', androidUrls);
-      return androidUrls;
-    }
+    // 4. API de WhatsApp como fallback universal
+    universalUrls.push(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`);
     
-    // Para Windows y otros sistemas
-    const defaultUrls = [
-      `https://wa.me/${cleanPhone}?text=${encodedMessage}`,
-      `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`,
-      `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`
-    ];
-    
-    console.log('🖥️ URLs por defecto generadas:', defaultUrls);
-    return defaultUrls;
+    console.log(`📱 URLs universales generadas para ${device.isIOS ? 'iOS' : device.isAndroid ? 'Android' : device.isMacOS ? 'macOS' : device.isWindows ? 'Windows' : device.isLinux ? 'Linux' : 'Desconocido'}:`, universalUrls);
+    return universalUrls;
   };
 
   // FUNCIÓN MEJORADA PARA INTENTAR ABRIR WHATSAPP CON MÚLTIPLES MÉTODOS
-  const tryOpenWhatsApp = async (urls, orderNumber) => {
+  const tryOpenWhatsApp = async (urls, orderNumber, phoneNumber) => {
     const device = detectDevice();
+    let success = false;
     
     for (let i = 0; i < urls.length; i++) {
       const url = urls[i];
       console.log(`🔄 Intentando método ${i + 1}/${urls.length}:`, url);
       
       try {
-        // Para dispositivos iOS, usar un enfoque especial
-        if (device.isIOS && i === 0) {
-          // Primer intento: URL scheme de WhatsApp
-          const iframe = document.createElement('iframe');
-          iframe.style.display = 'none';
-          iframe.src = url;
-          document.body.appendChild(iframe);
+        // Método 1: Para URLs de esquema (whatsapp://) en móviles y tablets
+        if (url.startsWith('whatsapp://') && (device.isMobile || device.isTablet)) {
+          // Crear un enlace invisible y hacer clic
+          const link = document.createElement('a');
+          link.href = url;
+          link.style.display = 'none';
+          document.body.appendChild(link);
           
-          // Limpiar después de un tiempo
-          setTimeout(() => {
-            document.body.removeChild(iframe);
-          }, 2000);
+          // Detectar si la app se abre
+          let appOpened = false;
+          const startTime = Date.now();
           
-          // Esperar un poco para ver si funciona
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Listener para detectar si la página pierde el foco (app se abre)
+          const handleVisibilityChange = () => {
+            if (document.hidden || Date.now() - startTime > 1000) {
+              appOpened = true;
+            }
+          };
           
-          // Si llegamos aquí, probablemente funcionó
-          console.log('✅ Método iOS iframe exitoso');
-          return true;
+          const handleBlur = () => {
+            appOpened = true;
+          };
+          
+          document.addEventListener('visibilitychange', handleVisibilityChange);
+          window.addEventListener('blur', handleBlur);
+          
+          // Hacer clic en el enlace
+          link.click();
+          
+          // Esperar un momento para ver si la app se abre
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Limpiar
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+          window.removeEventListener('blur', handleBlur);
+          document.body.removeChild(link);
+          
+          if (appOpened) {
+            console.log('✅ App de WhatsApp abierta exitosamente');
+            success = true;
+            break;
+          } else {
+            console.log('⚠️ App de WhatsApp no disponible, intentando siguiente método...');
+            continue;
+          }
         }
         
-        // Para todos los dispositivos: intentar abrir en nueva ventana/pestaña
-        const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-        
-        if (newWindow) {
-          console.log('✅ Ventana abierta exitosamente');
+        // Método 2: Para URLs HTTPS - abrir en nueva ventana/pestaña
+        if (url.startsWith('https://')) {
+          // Configurar opciones de ventana según el dispositivo
+          let windowFeatures = 'noopener,noreferrer';
           
-          // Para dispositivos móviles, cerrar la ventana después de un tiempo
-          if (device.isMobile) {
-            setTimeout(() => {
-              try {
-                newWindow.close();
-              } catch (e) {
-                console.log('ℹ️ No se pudo cerrar la ventana automáticamente');
-              }
-            }, 3000);
+          if (device.isDesktop) {
+            // Para escritorio: ventana popup centrada
+            const width = 800;
+            const height = 600;
+            const left = (window.screen.width - width) / 2;
+            const top = (window.screen.height - height) / 2;
+            windowFeatures = `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,${windowFeatures}`;
           }
           
-          return true;
+          const newWindow = window.open(url, '_blank', windowFeatures);
+          
+          if (newWindow) {
+            console.log('✅ Ventana de WhatsApp abierta exitosamente');
+            
+            // Para móviles y tablets: cerrar la ventana después de un tiempo
+            if (device.isMobile || device.isTablet) {
+              setTimeout(() => {
+                try {
+                  if (!newWindow.closed) {
+                    newWindow.close();
+                  }
+                } catch (e) {
+                  console.log('ℹ️ No se pudo cerrar la ventana automáticamente');
+                }
+              }, 3000);
+            }
+            
+            success = true;
+            break;
+          } else {
+            console.log('⚠️ Bloqueador de ventanas emergentes activo, intentando método alternativo...');
+            
+            // Método alternativo: cambiar la ubicación actual
+            if (i === urls.length - 1) {
+              window.location.href = url;
+              success = true;
+              break;
+            }
+            continue;
+          }
         }
         
-        console.log('⚠️ No se pudo abrir ventana, intentando siguiente método...');
+        // Método 3: Fallback - crear enlace y hacer clic
+        const fallbackLink = document.createElement('a');
+        fallbackLink.href = url;
+        fallbackLink.target = '_blank';
+        fallbackLink.rel = 'noopener noreferrer';
+        fallbackLink.style.display = 'none';
+        document.body.appendChild(fallbackLink);
+        
+        fallbackLink.click();
+        
+        setTimeout(() => {
+          document.body.removeChild(fallbackLink);
+        }, 1000);
+        
+        console.log('✅ Enlace de fallback ejecutado');
+        success = true;
+        break;
         
       } catch (error) {
         console.log(`❌ Error en método ${i + 1}:`, error);
         
-        // Si no es el último intento, continuar
-        if (i < urls.length - 1) {
-          console.log('🔄 Intentando siguiente método...');
-          continue;
+        // Si es el último intento y no hemos tenido éxito, intentar método de emergencia
+        if (i === urls.length - 1 && !success) {
+          try {
+            // Método de emergencia: copiar al portapapeles y mostrar instrucciones
+            const emergencyMessage = `WhatsApp: ${phoneNumber}\n\nPor favor contacta manualmente para completar tu pedido.`;
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(emergencyMessage);
+              console.log('📋 Mensaje copiado al portapapeles como método de emergencia');
+              success = true;
+            }
+          } catch (clipboardError) {
+            console.log('❌ Error al copiar al portapapeles:', clipboardError);
+          }
         }
       }
       
       // Pequeña pausa entre intentos
       if (i < urls.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
     
-    // Si todos los métodos fallaron
-    console.log('❌ Todos los métodos fallaron');
-    return false;
+    return success;
   };
 
   const sendToWhatsApp = async (orderData) => {
@@ -256,9 +339,18 @@ const CheckoutDetails = ({
     
     console.log('🚀 Iniciando envío a WhatsApp...');
     console.log('📱 Dispositivo:', device);
-    console.log('📞 Número de WhatsApp:', STORE_WHATSAPP);
+    console.log('📞 Número de WhatsApp:', storeConfig.storeInfo?.whatsappNumber || '+53 54690878');
     
-    let message = `🛒 *NUEVO PEDIDO #${orderNumber}*\n\n`;
+    // Incluir imagen de la tienda al inicio del mensaje con URL completa y responsiva
+    let message = `🏪 *YERO SHOP!* - Tu tienda online de confianza\n`;
+    message += `📸 Logo de la tienda: https://f005.backblazeb2.com/file/120000/Yero+Shop/lovepik.png\n\n`;
+    
+    // Número de orden con diseño moderno y animado
+    message += `✨ ═══════════════════════════════════ ✨\n`;
+    message += `🎯 *NUEVO PEDIDO*\n`;
+    message += `🔥 *#${orderNumber}* 🔥\n`;
+    message += `✨ ═══════════════════════════════════ ✨\n\n`;
+    
     message += `---------------------------------------------------------------\n`;
     message += `👤 *INFORMACIÓN DEL CLIENTE*\n`;
     message += `---------------------------------------------------------------\n`;
@@ -269,6 +361,8 @@ const CheckoutDetails = ({
     // Información del servicio con mejor formato
     message += `🚚 *DETALLES DE ENTREGA*\n`;
     message += `---------------------------------------------------------------\n`;
+    message += `👤 *Nombre Completo del Cliente:* ${selectedAddress.username}\n`;
+    message += `📱 *Número de Móvil del Cliente:* ${selectedAddress.mobile}\n`;
     
     if (selectedAddress.serviceType === SERVICE_TYPES.HOME_DELIVERY) {
       const zoneName = SANTIAGO_ZONES.find(z => z.id === selectedAddress.zone)?.name;
@@ -286,7 +380,7 @@ const CheckoutDetails = ({
       }
     }
     
-    message += `📞 *Teléfono de contacto:* ${selectedAddress.mobile}\n\n`;
+    message += `\n`;
     
     // Productos con iconos y mejor formato
     message += `🛍️ *PRODUCTOS SOLICITADOS*\n`;
@@ -334,6 +428,12 @@ const CheckoutDetails = ({
       timeZone: 'America/Havana'
     })}\n\n`;
     
+    // Número de orden destacado al final
+    message += `🎯 *NÚMERO DE PEDIDO PARA REFERENCIA:*\n`;
+    message += `🌟 ═══════════════════════════════════ 🌟\n`;
+    message += `🔥 *#${orderNumber}* 🔥\n`;
+    message += `🌟 ═══════════════════════════════════ 🌟\n\n`;
+    
     message += `📋 *Instrucciones importantes:*\n`;
     message += `• Confirme la disponibilidad de los productos\n`;
     message += `• Verifique la dirección de entrega\n`;
@@ -344,43 +444,55 @@ const CheckoutDetails = ({
     message += `🏪 *Yero Shop!*\n`;
     message += `"La tienda online de compras hecha a tu medida" ✨\n`;
     message += `📍 Santiago de Cuba, Cuba\n`;
-    message += `📱 WhatsApp: ${STORE_WHATSAPP}\n`;
+    message += `📱 WhatsApp: ${storeConfig.storeInfo?.whatsappNumber || '+53 54690878'}\n`;
     message += `🌐 Tienda online: https://yeroshop.vercel.app\n\n`;
     message += `¡Gracias por confiar en nosotros! 🙏\n`;
     message += `Su satisfacción es nuestra prioridad 💯`;
 
     // Generar URLs según el dispositivo
-    const whatsappUrls = generateWhatsAppURL(message, STORE_WHATSAPP);
+    const whatsappUrls = generateWhatsAppURL(message, storeConfig.storeInfo?.whatsappNumber || '+53 54690878');
     
     // Mostrar notificación específica según el dispositivo
-    if (device.isAppleDevice) {
-      toastHandler(ToastType.Info, `📱 Abriendo WhatsApp en dispositivo Apple...`);
+    if (device.isIOS) {
+      toastHandler(ToastType.Info, `📱 Abriendo WhatsApp en iOS...`);
+    } else if (device.isMacOS) {
+      toastHandler(ToastType.Info, `💻 Abriendo WhatsApp en macOS...`);
     } else if (device.isAndroid) {
       toastHandler(ToastType.Info, `🤖 Abriendo WhatsApp en Android...`);
+    } else if (device.isWindows) {
+      toastHandler(ToastType.Info, `🪟 Abriendo WhatsApp en Windows...`);
+    } else if (device.isLinux) {
+      toastHandler(ToastType.Info, `🐧 Abriendo WhatsApp en Linux...`);
+    } else if (device.isTablet) {
+      toastHandler(ToastType.Info, `📱 Abriendo WhatsApp en tablet...`);
     } else {
-      toastHandler(ToastType.Info, `💻 Abriendo WhatsApp Web...`);
+      toastHandler(ToastType.Info, `💻 Abriendo WhatsApp...`);
     }
     
     // Intentar abrir WhatsApp con múltiples métodos
-    const success = await tryOpenWhatsApp(whatsappUrls, orderNumber);
+    const success = await tryOpenWhatsApp(whatsappUrls, orderNumber, storeConfig.storeInfo?.whatsappNumber || '+53 54690878');
     
     if (success) {
       console.log('✅ WhatsApp abierto exitosamente');
-      toastHandler(ToastType.Success, `✅ Pedido #${orderNumber} enviado a WhatsApp`);
+      toastHandler(ToastType.Success, `✅ Pedido #${orderNumber} enviado a WhatsApp exitosamente`);
     } else {
       console.log('❌ No se pudo abrir WhatsApp automáticamente');
       
       // Fallback: mostrar información manual
-      const fallbackMessage = device.isAppleDevice 
-        ? `📱 Por favor, abre WhatsApp manualmente y envía un mensaje a ${STORE_WHATSAPP} con el número de pedido #${orderNumber}`
-        : `💻 Por favor, abre WhatsApp Web o la aplicación y contacta a ${STORE_WHATSAPP} con el pedido #${orderNumber}`;
+      let fallbackMessage = `📱 Por favor, abre WhatsApp manualmente y contacta a ${storeConfig.storeInfo?.whatsappNumber || '+53 54690878'} con el pedido #${orderNumber}`;
+      
+      if (device.isDesktop) {
+        fallbackMessage = `💻 Por favor, abre WhatsApp Web (web.whatsapp.com) o la aplicación de escritorio y contacta a ${storeConfig.storeInfo?.whatsappNumber || '+53 54690878'} con el pedido #${orderNumber}`;
+      }
       
       toastHandler(ToastType.Warn, fallbackMessage);
       
       // Copiar número al portapapeles como ayuda adicional
       try {
-        await navigator.clipboard.writeText(STORE_WHATSAPP);
-        toastHandler(ToastType.Info, `📋 Número de WhatsApp copiado: ${STORE_WHATSAPP}`);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(storeConfig.storeInfo?.whatsappNumber || '+53 54690878');
+          toastHandler(ToastType.Info, `📋 Número de WhatsApp copiado: ${storeConfig.storeInfo?.whatsappNumber || '+53 54690878'}`);
+        }
       } catch (error) {
         console.log('No se pudo copiar al portapapeles:', error);
       }

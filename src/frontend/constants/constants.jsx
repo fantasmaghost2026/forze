@@ -1,4 +1,5 @@
-import { AiFillGithub, AiFillLinkedin, AiOutlineTwitter } from 'react-icons/ai';
+import { AiFillLinkedin, AiOutlineTwitter } from 'react-icons/ai';
+import { MdOutlineFacebook } from 'react-icons/md';
 import { v4 as uuid } from 'uuid';
 
 export const FOOTER_LINKS = [
@@ -14,7 +15,7 @@ export const FOOTER_LINKS = [
   },
   {
     id: 3,
-    icon: <AiFillGithub />,
+    icon: <MdOutlineFacebook />,
     url: 'https://www.facebook.com/tvalacarta',
   },
 ];
@@ -257,7 +258,7 @@ export const DEFAULT_STORE_CONFIG = {
   "storeName": "Yero Shop!",
   "whatsappNumber": "+53 54690878",
   "storeAddress": "Santiago de Cuba, Cuba",
-  "lastModified": "2025-07-10T16:52:02.197Z",
+  "lastModified": "2025-07-13T12:35:26.656Z",
   "version": "1.0.0"
 };
 
@@ -331,7 +332,7 @@ export const CURRENCIES = {
     name: 'Moneda Libremente Convertible',
     symbol: 'MLC',
     flag: '🏦',
-    rate: 235,
+    rate: 232,
   },
 };
 
