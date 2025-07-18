@@ -341,9 +341,9 @@ const CheckoutDetails = ({
     console.log('📱 Dispositivo:', device);
     console.log('📞 Número de WhatsApp:', storeConfig.storeInfo?.whatsappNumber || '+53 54690878');
     
-    // Incluir imagen de la tienda al inicio del mensaje con URL completa y responsiva
+    // Incluir imagen de la tienda al inicio del mensaje
     let message = `🏪 *YERO SHOP!* - Tu tienda online de confianza\n`;
-    message += `📸 Logo de la tienda: https://f005.backblazeb2.com/file/120000/Yero+Shop/lovepik.png\n\n`;
+    message += `📸 Imagen: ${window.location.origin}/lovepik.png\n\n`;
     
     // Número de orden con diseño moderno y animado
     message += `✨ ═══════════════════════════════════ ✨\n`;
